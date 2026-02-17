@@ -437,5 +437,8 @@ def logUrl(url):
     
     print('[Not captured]', url, data, '/', 'across', '=>', sent_msgs)
 
-if __name__ == '__main__':
+def main():
     extractor_main('pburl_extract')
+
+if __name__ == '__main__':
+    main()

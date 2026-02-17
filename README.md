@@ -30,16 +30,32 @@ On most other distributions, you'll want to run it directly:
 # For Ubuntu/Debian testing derivates:
 $ sudo apt install python3-pip git openjdk-8-jre python3-qtpy-pyside6
 
-$ sudo pip3 install protobuf requests websocket-client
+# Then, using UV:
+$ sudo snap install astral-uv
+$ uv tool install pbtk
+$ pbtk
 
-$ git clone https://github.com/marin-m/pbtk
-$ cd pbtk
-$ ./gui.py
+# Or using pipx:
+$ sudo apt install pipx
+$ pipx install pbtk
+$ pbtk
 ```
 
 Windows is also supported (with the same modules required). Once you run the GUI, it should warn you on what you are missing depending on what you try to do.
 
-## Command line usage
+## Command line usage (installing through package manager)
+
+The GUI can be lanched through the main script:
+
+    pbtk
+
+The following scripts can also be used standalone, without a GUI:
+
+    pbtk-jar-extract [-h] input_file [output_dir]
+    pbtk-from-binary [-h] input_file [output_dir]
+    pbtk-web-extract [-h] input_url [output_dir]
+
+## Command line usage (local)
 
 The GUI can be lanched through the main script:
 
@@ -47,9 +63,9 @@ The GUI can be lanched through the main script:
 
 The following scripts can also be used standalone, without a GUI:
 
-    ./extractors/jar_extract.py [-h] input_file [output_dir]
-    ./extractors/from_binary.py [-h] input_file [output_dir]
-    ./extractors/web_extract.py [-h] input_url [output_dir]
+    ./src/extractors/jar_extract.py [-h] input_file [output_dir]
+    ./src/extractors/from_binary.py [-h] input_file [output_dir]
+    ./src/extractors/web_extract.py [-h] input_url [output_dir]
 
 
 ## Typical workflow
@@ -120,7 +136,7 @@ PBTK uses two kinds of pluggable modules internally: extractors, and transports.
 
 * An **extractor** supports extracting .proto structures from a target Protobuf implementation or platform.
 
-Extractors are defined in `extractors/*.py`. They are defined as a method preceded by a decorator, like this:
+Extractors are defined in `src/extractors/*.py`. They are defined as a method preceded by a decorator, like this:
 
 ```python
 @register_extractor(name = 'my_extractor',
@@ -138,7 +154,7 @@ def my_extractor(path):
 
 * A **transport** supports a way of deserializing, reserializing and sending Protobuf data over the network. For example, the most commonly used transport is raw POST data over HTTP.
 
-Transports are defined in `utils/transports.py`. They are defined as a class preceded by a decorator, like this:
+Transports are defined in `src/utils/transports.py`. They are defined as a class preceded by a decorator, like this:
 
 ```python
 @register_transport(

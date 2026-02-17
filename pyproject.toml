@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pbtk"
+version = "1.0.6"
+authors = [
+  {name = "Marin Moulinier"},
+]
+description = "A toolset for reverse engineering and fuzzing Protobuf-based apps"
+readme = "README.md"
+requires-python = ">=3.5"
+dependencies = [
+    "protobuf",
+    "requests",
+    "websocket-client",
+    "PySide6"
+]
+
+[project.urls]
+Homepage = "https://github.com/marin-m/pbtk"
+
+[project.scripts]
+pbtk = "pbtk.gui:PBTKGUI"
+pbtk-jar-extract = "pbtk.extractors.jar_extract:main"
+pbtk-from-binary = "pbtk.extractors.from_binary:main"
+pbtk-web-extract = "pbtk.extractors.web_extract:main"
+
+[tool.setuptools]
+include-package-data = true
+package-dir = { pbtk = "src" }
+packages = [
+    "pbtk",
+    "pbtk.extractors",
+    "pbtk.utils",
+    "pbtk.utils.external",
+    "pbtk.utils.external.dex2jar",
+    "pbtk.utils.external.dex2jar.lib",
+    "pbtk.utils.external.jad",
+    "pbtk.utils.external.protoc",
+    "pbtk.views"
+]
+
+[tool.setuptools.package-data]
+"pbtk.utils.external.dex2jar" = ["*"]
+"pbtk.utils.external.dex2jar.lib" = ["*"]
+"pbtk.utils.external.jad" = ["*"]
+"pbtk.utils.external.protoc" = ["*"]
+"pbtk.views" = ["*"]

@@ -957,5 +957,8 @@ def extract_j2me(jar, cls, enums, gen_classes_j2me, protobuftype_cls, consts,
 type_consts = {k.split('_')[1].lower(): v for k, v in FieldDescriptorProto.Type.items()}
 label_consts = {k.split('_')[1].lower(): v for k, v in FieldDescriptorProto.Label.items()}
 
-if __name__ == '__main__':
+def main():
     extractor_main('jar_extract')
+
+if __name__ == '__main__':
+    main()

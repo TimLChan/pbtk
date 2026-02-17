@@ -76,5 +76,8 @@ def walk_binary(binr):
         # Convert to ascii
         yield descpb_to_proto(proto)
 
-if __name__ == '__main__':
+def main():
     extractor_main('from_binary')
+
+if __name__ == '__main__':
+    main()
