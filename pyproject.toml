@@ -20,9 +20,13 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/marin-m/pbtk"
+Issues = "https://github.com/marin-m/pbtk/issues"
+Changelog = "https://github.com/marin-m/pbtk/releases"
+
+[project.gui-scripts]
+pbtk = "pbtk.gui:PBTKGUI"
 
 [project.scripts]
-pbtk = "pbtk.gui:PBTKGUI"
 pbtk-jar-extract = "pbtk.extractors.jar_extract:main"
 pbtk-from-binary = "pbtk.extractors.from_binary:main"
 pbtk-web-extract = "pbtk.extractors.web_extract:main"
