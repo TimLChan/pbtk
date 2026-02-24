@@ -31,7 +31,7 @@ On most other distributions, you'll want to run it directly:
 $ sudo apt install python3-pip git openjdk-8-jre python3-qtpy-pyside6
 
 # Then, using UV:
-$ sudo snap install astral-uv
+$ sudo snap install --classic astral-uv
 $ uv tool install pbtk
 $ pbtk
 
