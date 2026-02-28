@@ -24,7 +24,7 @@ Issues = "https://github.com/marin-m/pbtk/issues"
 Changelog = "https://github.com/marin-m/pbtk/releases"
 
 [project.gui-scripts]
-pbtk = "pbtk.gui:PBTKGUI"
+pbtk = "pbtk.gui:main"
 
 [project.scripts]
 pbtk-jar-extract = "pbtk.extractors.jar_extract:main"

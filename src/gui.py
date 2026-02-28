@@ -587,6 +587,8 @@ class Worker(QThread):
 
         self.finished.emit(output)
 
+def main():
+    PBTKGUI()
 
 if __name__ == "__main__":
-    PBTKGUI()
+    main()
