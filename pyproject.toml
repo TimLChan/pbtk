@@ -10,6 +10,18 @@ authors = [
 ]
 description = "A toolset for reverse engineering and fuzzing Protobuf-based apps"
 readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Disassemblers",
+    "Topic :: Security",
+    "Environment :: X11 Applications :: Qt",
+    "Environment :: Console"
+]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.5"
 dependencies = [
     "protobuf",
