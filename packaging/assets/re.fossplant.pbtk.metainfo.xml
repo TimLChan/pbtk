@@ -29,11 +29,11 @@
       <caption>pbtk: Welcome screen</caption>
     </screenshot>
     <screenshot>
-      <image type="source" scale="2">https://camo.githubusercontent.com/ab99476f43edee9734c1fdc2518cb9f21f6d644d776c74ebe5ee8e2226521977/68747470733a2f2f692e696d6775722e636f6d2f326c566d476f472e706e67</image>
+      <image type="source">https://camo.githubusercontent.com/ab99476f43edee9734c1fdc2518cb9f21f6d644d776c74ebe5ee8e2226521977/68747470733a2f2f692e696d6775722e636f6d2f326c566d476f472e706e67</image>
       <caption>pbtk: Fuzzer screen with Protobuf response</caption>
     </screenshot>
-    <screenshot environment="gnome:dark">
-      <image type="source" scale="2">https://camo.githubusercontent.com/bae5d3ae615cf05bbad1248039b110dfaf7b656fb9cd656dd9525497de2da303/68747470733a2f2f692e696d6775722e636f6d2f6a6875363870472e706e67</image>
+    <screenshot>
+      <image type="source">https://camo.githubusercontent.com/bae5d3ae615cf05bbad1248039b110dfaf7b656fb9cd656dd9525497de2da303/68747470733a2f2f692e696d6775722e636f6d2f6a6875363870472e706e67</image>
       <caption>pbtk: Network endpoint selection screen</caption>
     </screenshot>
   </screenshots>
@@ -60,7 +60,8 @@ https://hughsie.github.io/oars/index.html
     <release version="1.0.8" date="2026-03-04">
       <description>
         <p>Implement Flatpak compatibility</p>
-        <p>Force the Protobuf Python module to 6.x as 7.x removes the FieldDescriptor.label field and other stuff (https://protobuf.dev/news/2025-09-19/#python-remove-apis)</p>
+        <p>Force the Protobuf Python module to 6.x as 7.x removes the FieldDescriptor.label field and other stuff</p>
+        <p>Bump the target Python version specified in pyproject.toml to 3.9+ to content Dependabot</p>
       </description>
     </release>
   </releases>
