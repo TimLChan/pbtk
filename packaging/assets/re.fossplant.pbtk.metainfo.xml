@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>re.fossplant.pbtk</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name>pbtk</name>
+  <branding>
+    <color type="primary" scheme_preference="light">#DCB3E7</color>
+    <color type="primary" scheme_preference="dark">#664D96</color>
+  </branding>
+  <summary>Reverse engineering Protobuf apps</summary>
+  <description>
+    <p>pbtk (Protobuf toolkit) is a full-fledged set of scripts, accessible through an unified GUI, that provides two main features:</p>
+    <p>- Extracting Protobuf structures from programs, converting them back into readable .protos, supporting various implementations:</p>
+    <ul>
+      <li>All the main Java runtimes (base, Lite, Nano, Micro, J2ME), with full Proguard support,</li>
+      <li>Binaries containing embedded reflection metadata (typically C++, sometimes Java and most other bindings),</li>
+      <li>Web applications using the JsProtoUrl runtime.</li>
+    </ul>
+    <p>- Editing, replaying and fuzzing data sent to Protobuf network endpoints, through a handy graphical interface that allows you to edit live the fields for a Protobuf message and view the result.</p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://camo.githubusercontent.com/23b3f6d5f5eb9068f47dcbf67fd0bfc7ebc05d433b8f21d3596bd2df885603d2/68747470733a2f2f692e696d6775722e636f6d2f377736414271792e706e67</image>
+      <caption>pbtk: Fuzzer screen</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://camo.githubusercontent.com/8581ae3bc734be1f01d7167bccf05cc86e94cebde44dad6b5d0a53842c89c66a/68747470733a2f2f692e696d6775722e636f6d2f6f56737970574e2e706e67</image>
+      <caption>pbtk: Welcome screen</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source" scale="2">https://camo.githubusercontent.com/ab99476f43edee9734c1fdc2518cb9f21f6d644d776c74ebe5ee8e2226521977/68747470733a2f2f692e696d6775722e636f6d2f326c566d476f472e706e67</image>
+      <caption>pbtk: Fuzzer screen with Protobuf response</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image type="source" scale="2">https://camo.githubusercontent.com/bae5d3ae615cf05bbad1248039b110dfaf7b656fb9cd656dd9525497de2da303/68747470733a2f2f692e696d6775722e636f6d2f6a6875363870472e706e67</image>
+      <caption>pbtk: Network endpoint selection screen</caption>
+    </screenshot>
+  </screenshots>
+  <!--translation type="gettext">pbtk</translation-->
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <recommends>
+    <display_length compare="ge">720</display_length>
+  </recommends>
+  <url type="bugtracker">https://github.com/marin-m/pbtk/issues</url>
+  <url type="homepage">https://github.com/marin-m/pbtk</url>
+  <url type="contact">https://matrix.to/#/#pbtk:matrix.org</url>
+  <url type="faq">https://github.com/marin-m/pbtk#readme</url>
+  <!--url type="translate">https://github.com/marin-m/SongRec/tree/main/translations#readme</url-->
+  <url type="vcs-browser">https://github.com/marin-m/pbtk</url>
+<!--
+Open Age Rating Service
+https://hughsie.github.io/oars/index.html
+-->
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="1.0.8" date="2026-03-04">
+      <description>
+        <p>Implement Flatpak compatibility</p>
+        <p>Force the Protobuf Python module to 6.x as 7.x removes the FieldDescriptor.label field and other stuff (https://protobuf.dev/news/2025-09-19/#python-remove-apis)</p>
+      </description>
+    </release>
+  </releases>
+  <developer id="re.fossplant">
+    <name>Marin M. - Fossplant.re</name>
+  </developer>
+  <update_contact>marin-m@users.noreply.github.com</update_contact>
+
+  <launchable type="desktop-id">re.fossplant.pbtk.desktop</launchable>
+  <provides>
+    <binary>pbtk</binary>
+    <binary>pbtk-jar-extract</binary>
+    <binary>pbtk-from-binary</binary>
+    <binary>pbtk-web-extract</binary>
+    <mediatype>application/x-pie-executable</mediatype>
+    <mediatype>application/x-executable</mediatype>
+    <mediatype>application/x-sharedlib</mediatype>
+    <mediatype>application/vnd.microsoft.portable-executable</mediatype>
+    <mediatype>application/octet-stream</mediatype>
+    <mediatype>application/x-msdownload</mediatype>
+    <mediatype>application/java-archive</mediatype>
+  </provides>
+</component>

@@ -19,7 +19,9 @@ from shutil import which
 
 # Constructing paths - local data
 
-if platform != "win32":
+if environ.get('FLATPAK_ID') and environ.get('XDG_DATA_HOME'):
+    BASE_PATH = Path(environ['XDG_DATA_HOME'])
+elif platform != "win32":
     BASE_PATH = Path(environ["HOME"]) / ".pbtk"
 else:
     BASE_PATH = Path(environ["APPDATA"]) / "pbtk"
