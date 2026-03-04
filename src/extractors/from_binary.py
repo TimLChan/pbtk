@@ -4,7 +4,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 from os.path import dirname, realpath
 
-__import__("sys").path.append(dirname(realpath(__file__)) + "/..")
+__import__('sys').path.append(dirname(realpath(__file__)) + '/..')
 from utils.common import register_extractor, extractor_main
 from utils.descpb_to_proto import descpb_to_proto
 
@@ -27,13 +27,13 @@ from utils.descpb_to_proto import descpb_to_proto
 
 
 @register_extractor(
-    name="from_binary",
-    desc="Extract Protobuf metadata from binary file (*.dll, *.so...)",
+    name='from_binary',
+    desc='Extract Protobuf metadata from binary file (*.dll, *.so...)',
 )
 def walk_binary(binr):
     if isinstance(binr, str):
         try:
-            with open(binr, "rb") as fd:
+            with open(binr, 'rb') as fd:
                 binr = fd.read()
         except Exception:
             return
@@ -42,15 +42,15 @@ def walk_binary(binr):
     # ".proto" or ".protodevel", as part of the "name" (1) field
     cursor = 0
     while cursor < len(binr):
-        cursor = binr.find(b".proto", cursor)
+        cursor = binr.find(b'.proto', cursor)
 
         if cursor == -1:
             break
-        cursor += len(".proto")
-        cursor += (binr[cursor : cursor + 5] == b"devel") * 5
+        cursor += len('.proto')
+        cursor += (binr[cursor : cursor + 5] == b'devel') * 5
 
         # Search back for the (1, length-delimited) marker
-        start = binr.rfind(b"\x0a", max(cursor - 1024, 0), cursor)
+        start = binr.rfind(b'\x0a', max(cursor - 1024, 0), cursor)
 
         if start > 0 and binr[start - 1] == 0x0A == (cursor - start - 1):
             start -= 1
@@ -63,7 +63,7 @@ def walk_binary(binr):
             continue
 
         # Look just after for subsequent markers
-        tags = b"\x12\x1a\x22\x2a\x32\x3a\x42\x4a\x50\x58\x62"
+        tags = b'\x12\x1a\x22\x2a\x32\x3a\x42\x4a\x50\x58\x62'
         if binr[cursor] not in tags:
             continue
 
@@ -82,8 +82,8 @@ def walk_binary(binr):
 
 
 def main():
-    extractor_main("from_binary")
+    extractor_main('from_binary')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

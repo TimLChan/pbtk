@@ -64,3 +64,9 @@ packages = [
 "pbtk.utils.external.jad" = ["*"]
 "pbtk.utils.external.protoc" = ["*"]
 "pbtk.views" = ["*"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"

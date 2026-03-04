@@ -15,7 +15,7 @@ from ast import literal_eval
 
 from os.path import dirname, realpath
 
-__import__("sys").path.append(dirname(realpath(__file__)) + "/..")
+__import__('sys').path.append(dirname(realpath(__file__)) + '/..')
 from utils.common import register_extractor, extractor_main
 from utils.nest_messages import nest_and_print_to_files
 from extractors.from_binary import walk_binary
@@ -43,17 +43,17 @@ from utils.java_wrapper import JarWrapper
 
 
 @register_extractor(
-    name="jar_extract",
-    desc="Extract Protobuf structures from any Java code (*.jar, *.dex, *.apk)",
-    depends={"binaries": ["java"]},
+    name='jar_extract',
+    desc='Extract Protobuf structures from any Java code (*.jar, *.dex, *.apk)',
+    depends={'binaries': ['java']},
 )
 def handle_jar(path):
     # Scan classes for Java Protobuf string signatures
 
-    if path.endswith(".jar"):
-        yield "_progress", ("Decompressing JAR...", None)
+    if path.endswith('.jar'):
+        yield '_progress', ('Decompressing JAR...', None)
     else:
-        yield "_progress", ("Converting DEX to JAR...", None)
+        yield '_progress', ('Converting DEX to JAR...', None)
 
     with JarWrapper(path) as jar:
         enums = {}
@@ -72,16 +72,19 @@ def handle_jar(path):
         for i, cls in enumerate(jar.classes):
             if i % 10 == 0:
                 yield (
-                    "_progress",
-                    ("Scanning Java package contents...", (i / len(jar.classes)) * 0.5),
+                    '_progress',
+                    (
+                        'Scanning Java package contents...',
+                        (i / len(jar.classes)) * 0.5,
+                    ),
                 )
 
-            pkg = cls[: cls.rfind(".")] if "." in cls else ""
+            pkg = cls[: cls.rfind('.')] if '.' in cls else ''
             binr = jar.read(cls)
 
             # Search for CodedInputStream/CodedOutputStream
 
-            raw_cls = cls.replace(".", "/").encode("utf8")
+            raw_cls = cls.replace('.', '/').encode('utf8')
 
             """
             Handle multiple cases:
@@ -96,31 +99,31 @@ def handle_jar(path):
             kinds that can be produced by Proguard) instead.
             """
 
-            SIG_NANO = b"([BII)V"  # CodedInputByteBufferNano(final byte[] buffer, final int off, final int len)
-            SIG_NANO_2 = b"([BI)V"  # CodedInputByteBufferNano(final byte[] buffer, final int bufferSize)
+            SIG_NANO = b'([BII)V'  # CodedInputByteBufferNano(final byte[] buffer, final int off, final int len)
+            SIG_NANO_2 = b'([BI)V'  # CodedInputByteBufferNano(final byte[] buffer, final int bufferSize)
             SIG_DEF = (
-                b"([BIIZ)L%s;" % raw_cls
+                b'([BIIZ)L%s;' % raw_cls
             )  # static CodedInputStream newInstance(final byte[] buf, final int off, final int len, final boolean bufferIsImmutable)
             SIG_DEF_2 = (
-                b"([BII)L%s;" % raw_cls
+                b'([BII)L%s;' % raw_cls
             )  # static CodedInputStream newInstance(final byte[] buf, final int off, final int len)
-            SIG_CALL = b"([BIIZ)V"  # private ArrayDecoder(final byte[] buffer, final int offset, final int len, boolean immutable)
-            SIG_CALL_2 = b"([BII)V"  # private ArrayDecoder(final byte[] buffer, final int offset, final int len)
-            SIG_CALL_3 = b"([BIIZL"  # CodedInputStream$ArrayDecoder(byte abyte0[], int i, int j, boolean flag, com.google.protobuf.CodedInputStream$1 codedinputstream$1)
+            SIG_CALL = b'([BIIZ)V'  # private ArrayDecoder(final byte[] buffer, final int offset, final int len, boolean immutable)
+            SIG_CALL_2 = b'([BII)V'  # private ArrayDecoder(final byte[] buffer, final int offset, final int len)
+            SIG_CALL_3 = b'([BIIZL'  # CodedInputStream$ArrayDecoder(byte abyte0[], int i, int j, boolean flag, com.google.protobuf.CodedInputStream$1 codedinputstream$1)
 
             has_constructor = SIG_DEF in binr or SIG_DEF_2 in binr
             calls_arraydecoder = (
                 SIG_CALL in binr or SIG_CALL_2 in binr or SIG_CALL_3 in binr
             )
             is_legit_class = (
-                b"Beginning index" not in binr
-                and b"Number too large" not in binr
-                and b"a byte array" not in binr
+                b'Beginning index' not in binr
+                and b'Number too large' not in binr
+                and b'a byte array' not in binr
             )
 
             has_constructor_nano = SIG_NANO in binr or SIG_NANO_2 in binr
-            has_relevant_string = b"message contained an invalid tag" in binr
-            has_relevant_string_nano = b"is beyond current" in binr
+            has_relevant_string = b'message contained an invalid tag' in binr
+            has_relevant_string_nano = b'is beyond current' in binr
             has_relevant_string_micro = b"when buffer wasn't empty" in binr
 
             """
@@ -129,16 +132,17 @@ def handle_jar(path):
             recognizable string.
             """
 
-            has_out_constructor = b"([BII" in binr
-            has_out_relevant_string = b"write as much data as" in binr
-            has_out_relevant_string_old = b"UTF-8 not supported." in binr
+            has_out_constructor = b'([BII' in binr
+            has_out_relevant_string = b'write as much data as' in binr
+            has_out_relevant_string_old = b'UTF-8 not supported.' in binr
             has_out_relevant_string_nano = (
-                b"Unpaired surrogate at index " in binr and b"wrap" in binr
+                b'Unpaired surrogate at index ' in binr and b'wrap' in binr
             )
             has_out_relevant_string_2 = (
-                b"Converting ill-formed UTF-16." in binr and b"Pos:" not in binr
+                b'Converting ill-formed UTF-16.' in binr
+                and b'Pos:' not in binr
             )
-            is_legit_out_class = b"byte array" not in binr
+            is_legit_out_class = b'byte array' not in binr
 
             if has_out_constructor and (
                 (
@@ -149,7 +153,7 @@ def handle_jar(path):
                 or has_out_relevant_string_2
             ):  # CodedOutputStream
                 while pkg in pkg_to_codedoutputstream:
-                    pkg += "_"
+                    pkg += '_'
                 pkg_to_codedoutputstream[pkg] = cls
 
             elif (
@@ -161,36 +165,43 @@ def handle_jar(path):
                 and (has_relevant_string_nano or has_relevant_string_micro)
             ):  # CodedInputStream
                 while pkg in pkg_to_codedinputstream:
-                    pkg += "_"
+                    pkg += '_'
                 pkg_to_codedinputstream[pkg] = cls
 
             # Other classes that may be called for (de)serializing objects
 
-            elif b"Generated message class" in binr:  # GeneratedMessage*
+            elif b'Generated message class' in binr:  # GeneratedMessage*
                 out_additional_cls.append(cls)
 
-            elif b"is not a primitive type" in binr:  # InternalNano
+            elif b'is not a primitive type' in binr:  # InternalNano
                 map_entry_cls.append(cls)
 
             elif (
-                b"Groups are not allowed in maps" in binr
-                or b"a map entry message." in binr
+                b'Groups are not allowed in maps' in binr
+                or b'a map entry message.' in binr
             ):  # MapEntry*
                 map_entry_cls.append(cls)
 
             # Search for J2ME implementation's ProtoBuf.java
 
-            elif b"Unexp.EOF" in binr:
+            elif b'Unexp.EOF' in binr:
                 code = jar.decomp(cls, True).raw
-                protobuftype_cls = search(r"public \w+\(([\w.$]+) \w+\)", code).group(1)
+                protobuftype_cls = search(
+                    r'public \w+\(([\w.$]+) \w+\)', code
+                ).group(1)
 
                 default_consts = {}
-                for prop, const in findall(r"(\w+) = new Boolean\((\w+)\)", code):
-                    default_consts[cls + "." + prop] = const
+                for prop, const in findall(
+                    r'(\w+) = new Boolean\((\w+)\)', code
+                ):
+                    default_consts[cls + '.' + prop] = const
 
                 while pkg in pkg_to_j2me_protobuftype:
-                    pkg += "_"
-                pkg_to_j2me_protobuftype[pkg] = (protobuftype_cls, default_consts)
+                    pkg += '_'
+                pkg_to_j2me_protobuftype[pkg] = (
+                    protobuftype_cls,
+                    default_consts,
+                )
 
         for pkg in list(pkg_to_codedinputstream):
             if pkg not in pkg_to_codedoutputstream:
@@ -211,9 +222,9 @@ def handle_jar(path):
         for i, cls in enumerate(jar.classes):
             if i % 10 == 0:
                 yield (
-                    "_progress",
+                    '_progress',
                     (
-                        "Scanning Java package contents...",
+                        'Scanning Java package contents...',
                         (i / len(jar.classes)) * 0.5 + 0.5,
                     ),
                 )
@@ -221,13 +232,13 @@ def handle_jar(path):
             binr = jar.read(cls)
 
             # Search for metadata descriptors
-            if b".proto\x12" in binr or b".protodevel\x12" in binr:
+            if b'.proto\x12' in binr or b'.protodevel\x12' in binr:
                 code = jar.decomp(cls, True).raw
-                code = sub(r'",\s+"', "", code, flags=MULTILINE)
+                code = sub(r'",\s+"', '', code, flags=MULTILINE)
                 meta = search(r'"(\\n.+?\.proto.+)"', code)
                 if meta:
-                    meta = meta.group(1).encode("latin1")
-                    meta = meta.decode("unicode_escape").encode("latin1")
+                    meta = meta.group(1).encode('latin1')
+                    meta = meta.decode('unicode_escape').encode('latin1')
 
                     yield from walk_binary(meta)
                     had_metadata.add(cls)
@@ -235,11 +246,15 @@ def handle_jar(path):
             # Search for signatures common to generated Java classes
             for impl in pkg_to_codedinputstream:
                 if (
-                    b"%s"
-                    % pkg_to_codedinputstream[impl].replace(".", "/").encode("ascii")
+                    b'%s'
+                    % pkg_to_codedinputstream[impl]
+                    .replace('.', '/')
+                    .encode('ascii')
                     in binr
-                    and b"(L%s;"
-                    % pkg_to_codedoutputstream[impl].replace(".", "/").encode("ascii")
+                    and b'(L%s;'
+                    % pkg_to_codedoutputstream[impl]
+                    .replace('.', '/')
+                    .encode('ascii')
                     in binr
                     and cls
                     not in (
@@ -253,29 +268,34 @@ def handle_jar(path):
                     )
 
             # Search for generated J2ME classes
-            for _, (protobuftype_cls, consts) in pkg_to_j2me_protobuftype.items():
+            for _, (
+                protobuftype_cls,
+                consts,
+            ) in pkg_to_j2me_protobuftype.items():
                 if (
-                    b"(IILjava/lang/Object;)L%s;"
-                    % protobuftype_cls.replace(".", "/").encode("ascii")
+                    b'(IILjava/lang/Object;)L%s;'
+                    % protobuftype_cls.replace('.', '/').encode('ascii')
                     in binr
                     and cls != protobuftype_cls
                 ):
                     gen_classes_j2me[cls] = (protobuftype_cls, consts)
 
             # Search for enums
-            if b"Ljava/lang/Enum<" in binr[:256]:
+            if b'Ljava/lang/Enum<' in binr[:256]:
                 enums[cls] = cls
 
-                if "$" in cls:
-                    enums[cls.replace("$", ".")] = cls
-                    enums[cls.rsplit(".", 1)[0] + "." + cls.rsplit("$", 1)[1]] = cls
+                if '$' in cls:
+                    enums[cls.replace('$', '.')] = cls
+                    enums[
+                        cls.rsplit('.', 1)[0] + '.' + cls.rsplit('$', 1)[1]
+                    ] = cls
 
         gen_classes_nodollar = OrderedDict(gen_classes)
         for cls, pkg in OrderedDict(gen_classes_nodollar).items():
-            if "$" in cls:
-                gen_classes_nodollar[cls.replace("$", ".")] = pkg
+            if '$' in cls:
+                gen_classes_nodollar[cls.replace('$', '.')] = pkg
                 gen_classes_nodollar[
-                    cls.rsplit(".", 1)[0] + "." + cls.rsplit("$", 1)[1]
+                    cls.rsplit('.', 1)[0] + '.' + cls.rsplit('$', 1)[1]
                 ] = pkg
 
         """
@@ -296,9 +316,9 @@ def handle_jar(path):
         for i, (cls, (codedinputstream, codedoutputstream)) in enumerate(
             gen_classes.items()
         ):
-            yield "_progress", ("Extracting %s..." % cls, i / len(gen_classes))
+            yield '_progress', ('Extracting %s...' % cls, i / len(gen_classes))
 
-            if cls.split("$")[0] not in had_metadata:
+            if cls.split('$')[0] not in had_metadata:
                 extract_lite(
                     jar,
                     cls,
@@ -313,8 +333,13 @@ def handle_jar(path):
                 )
 
         # Call the extraction routine for J2ME
-        for i, (cls, (protobuftype_cls, consts)) in enumerate(gen_classes_j2me.items()):
-            yield "_progress", ("Extracting %s..." % cls, i / len(gen_classes_j2me))
+        for i, (cls, (protobuftype_cls, consts)) in enumerate(
+            gen_classes_j2me.items()
+        ):
+            yield (
+                '_progress',
+                ('Extracting %s...' % cls, i / len(gen_classes_j2me)),
+            )
 
             extract_j2me(
                 jar,
@@ -327,7 +352,7 @@ def handle_jar(path):
                 msg_to_referrers,
             )
 
-        yield "_progress", ("Dumping information to .protos...", None)
+        yield '_progress', ('Dumping information to .protos...', None)
 
         # Merge nested Protobuf messages and write them to files
         yield from nest_and_print_to_files(msg_path_to_obj, msg_to_referrers)
@@ -357,9 +382,9 @@ def extract_lite(
 ):
     code = jar.decomp(cls)
 
-    print("\nIn %s:" % cls)
+    print('\nIn %s:' % cls)
     if not code.raw:
-        print("(Jad failed)")
+        print('(Jad failed)')
         return
 
     """
@@ -393,16 +418,22 @@ def extract_lite(
     for start, (call, end) in code.method_calls.items():
         call_ret, call_obj, call_name, call_args = call
 
-        if call_obj in [codedinputstream, *map_entry_cls] and (call_ret, call_args) != (
-            "void",
-            "int",
+        if call_obj in [codedinputstream, *map_entry_cls] and (
+            call_ret,
+            call_args,
+        ) != (
+            'void',
+            'int',
         ):
             if not in_switch:
                 # Look at the switch structure around the read*() calls:
 
-                next_lines = "\n".join(code.raw[start:].split("\n")[:3])
+                next_lines = '\n'.join(code.raw[start:].split('\n')[:3])
 
-                if "INSTR lookupswitch" in next_lines or " switch(" in next_lines:
+                if (
+                    'INSTR lookupswitch' in next_lines
+                    or ' switch(' in next_lines
+                ):
                     in_switch = True
                     label_to_val = code.parse_switch(start, next_lines)
 
@@ -420,20 +451,27 @@ def extract_lite(
 
                     if lazy_tag and lazy_tag >> 3 not in fields:
                         lazy_obj = search(
-                            r"([\w$.]+) [\w$]+ = new ", code.raw[lazy_start:lazy_end]
+                            r'([\w$.]+) [\w$]+ = new ',
+                            code.raw[lazy_start:lazy_end],
                         )
                         fenumormsg = None
                         if lazy_obj and lazy_obj.group(1) in gen_classes:
                             fenumormsg = lazy_obj.group(1)
 
                         ftype = {
-                            0: "int32",
-                            1: "fixed64",
-                            2: "bytes",
-                            3: "group",
-                            5: "fixed32",
+                            0: 'int32',
+                            1: 'fixed64',
+                            2: 'bytes',
+                            3: 'group',
+                            5: 'fixed32',
                         }[lazy_tag & 7]
-                        fields[lazy_tag >> 3] = (None, ftype, fenumormsg, None, None)
+                        fields[lazy_tag >> 3] = (
+                            None,
+                            ftype,
+                            fenumormsg,
+                            None,
+                            None,
+                        )
 
                 if not label_to_val:  # We have seen every case...
                     break
@@ -442,7 +480,7 @@ def extract_lite(
 
                 # Parse the message number and wire type from switch case value
                 fnumber, wire_type = (tag >> 3), (tag & 0b111)
-                if fnumber in fields and fields[fnumber][0] != "bytes":
+                if fnumber in fields and fields[fnumber][0] != 'bytes':
                     continue
 
                 case = code.raw[label_start:label_end]
@@ -451,53 +489,58 @@ def extract_lite(
                 # Then look at called method's return type
 
                 fenumormsg = None
-                call_ret = call_ret.split(".")[-1]
+                call_ret = call_ret.split('.')[-1]
 
                 if wire_type == 0:  # Varint
-                    ftype = {"long": "int64", "boolean": "bool"}.get(call_ret, "uint32")
+                    ftype = {'long': 'int64', 'boolean': 'bool'}.get(
+                        call_ret, 'uint32'
+                    )
                     # We'll distinguish a uint32 from a int32 on step 2.
                     # We can't know signedness for (u)int64, (s)fixed32 or (s)fixed64, so pick the most common case.
 
                     if (
-                        "!= 0" in case and not ".arraycopy" in case
-                    ) or "oolean" in case:
-                        ftype = "bool"
-                    elif "Long" in ftype and ftype == "uint32":
-                        ftype = "int64"
+                        '!= 0' in case and not '.arraycopy' in case
+                    ) or 'oolean' in case:
+                        ftype = 'bool'
+                    elif 'Long' in ftype and ftype == 'uint32':
+                        ftype = 'int64'
 
                     # Look for enums
-                    if ftype == "uint32":
+                    if ftype == 'uint32':
                         for start2, (call2, _) in code.method_calls.items():
                             _, call2_obj, _, _ = call2
 
-                            if label_start < start2 < label_end and call2_obj in enums:
-                                ftype = "enum"
+                            if (
+                                label_start < start2 < label_end
+                                and call2_obj in enums
+                            ):
+                                ftype = 'enum'
                                 fenumormsg = call2_obj
                                 break
 
                 elif wire_type == 1:
-                    ftype = {"double": "double"}.get(call_ret, "fixed64")
-                    if "longBitsToDouble" in case:
-                        ftype = "double"
+                    ftype = {'double': 'double'}.get(call_ret, 'fixed64')
+                    if 'longBitsToDouble' in case:
+                        ftype = 'double'
 
                 elif wire_type == 5:
-                    ftype = {"float": "float"}.get(call_ret, "fixed32")
-                    if "intBitsToFloat" in case:
-                        ftype = "float"
+                    ftype = {'float': 'float'}.get(call_ret, 'fixed32')
+                    if 'intBitsToFloat' in case:
+                        ftype = 'float'
 
                 elif wire_type == 2:  # Length-delimited
-                    ftype = {"String": "string"}.get(call_ret, "bytes")
+                    ftype = {'String': 'string'}.get(call_ret, 'bytes')
 
-                    first_arg = code.raw[end:].split("\n", 1)[0].split(",")[0]
-                    if first_arg.endswith("()"):
-                        first_arg = first_arg.rsplit(".", 1)[0]
+                    first_arg = code.raw[end:].split('\n', 1)[0].split(',')[0]
+                    if first_arg.endswith('()'):
+                        first_arg = first_arg.rsplit('.', 1)[0]
 
                         if first_arg in gen_classes:
                             fenumormsg = first_arg
-                            ftype = "message"
+                            ftype = 'message'
 
                 elif wire_type == 3:
-                    ftype = "group"
+                    ftype = 'group'
 
                     for start2, (call2, _) in code.method_calls.items():
                         _, call2_obj, _, _ = call2
@@ -511,20 +554,28 @@ def extract_lite(
                 else:
                     return
 
-                if not fenumormsg and ftype in ("group", "bytes"):
-                    msg_obj = search(r"([\w$.]+) [\w$]+ = new ", case)
+                if not fenumormsg and ftype in ('group', 'bytes'):
+                    msg_obj = search(r'([\w$.]+) [\w$]+ = new ', case)
 
                     if msg_obj and msg_obj.group(1) in gen_classes:
                         fenumormsg = msg_obj.group(1)
-                        if ftype == "bytes":
-                            ftype = "message"
+                        if ftype == 'bytes':
+                            ftype = 'message'
 
                 # General case: store information for step 2
-                if call_obj not in map_entry_cls or len(call_args.split(", ")) != 8:
+                if (
+                    call_obj not in map_entry_cls
+                    or len(call_args.split(', ')) != 8
+                ):
                     fields[fnumber] = (None, ftype, fenumormsg, None, None)
 
                 else:  # Look for InternalNano.mergeMapEntry()
-                    args = code.raw[start:].split("(")[1].split(")")[0].split(", ")
+                    args = (
+                        code.raw[start:]
+                        .split('(')[1]
+                        .split(')')[0]
+                        .split(', ')
+                    )
                     var, ftype1, fmsg1, ftype2, fmsg2 = (
                         args[1],
                         int(args[3]),
@@ -534,7 +585,9 @@ def extract_lite(
                     )
 
                     fmsg2 = (
-                        fmsg2[4:].split("(")[0] if fmsg2.startswith("new ") else None
+                        fmsg2[4:].split('(')[0]
+                        if fmsg2.startswith('new ')
+                        else None
                     )
 
                     fields[fnumber] = create_map(
@@ -552,21 +605,27 @@ def extract_lite(
                         msg_path_to_obj,
                     )
 
-    if not in_switch and "tableswitch 0 0" not in code.raw:
+    if not in_switch and 'tableswitch 0 0' not in code.raw:
         return
 
     # Store any remaining fields that weren't parsed
     while label_to_val:
         lazy_start, (lazy_tag, lazy_end) = label_to_val.pop(0)
         if lazy_tag and lazy_tag >> 3 not in fields:
-            lazy_obj = search(r"([\w$.]+) [\w$]+ = new ", code.raw[lazy_start:lazy_end])
+            lazy_obj = search(
+                r'([\w$.]+) [\w$]+ = new ', code.raw[lazy_start:lazy_end]
+            )
             fenumormsg = None
             if lazy_obj and lazy_obj.group(1) in gen_classes:
                 fenumormsg = lazy_obj.group(1)
 
-            ftype = {0: "int32", 1: "fixed64", 2: "bytes", 3: "group", 5: "fixed32"}[
-                lazy_tag & 7
-            ]
+            ftype = {
+                0: 'int32',
+                1: 'fixed64',
+                2: 'bytes',
+                3: 'group',
+                5: 'fixed32',
+            }[lazy_tag & 7]
             fields[lazy_tag >> 3] = (None, ftype, fenumormsg, None, None)
 
     """
@@ -583,13 +642,15 @@ def extract_lite(
     for start, (call, _) in code.method_calls.items():
         call_ret, call_obj, call_name, call_args = call
 
-        has_constant = search(r"\(\d+", code.raw[start:].split("\n")[0]) or search(
-            r"\([a-zA-Z_]\w*, \d+", code.raw[start:].split("\n")[0]
-        )
+        has_constant = search(
+            r'\(\d+', code.raw[start:].split('\n')[0]
+        ) or search(r'\([a-zA-Z_]\w*, \d+', code.raw[start:].split('\n')[0])
 
-        if call_obj in [codedoutputstream, *out_additional_cls, *map_entry_cls] and (
-            has_constant or take_packed
-        ):
+        if call_obj in [
+            codedoutputstream,
+            *out_additional_cls,
+            *map_entry_cls,
+        ] and (has_constant or take_packed):
             from_condition = False
 
             # Does it originate from a condition block?
@@ -603,34 +664,41 @@ def extract_lite(
             # what are the nearest blocks we can relate to?
             if not from_condition:
                 func_start, func_end = next(
-                    (i for i in code.method_bounds.values() if i[0] < start < i[1]),
+                    (
+                        i
+                        for i in code.method_bounds.values()
+                        if i[0] < start < i[1]
+                    ),
                     None,
                 )
 
-                after_line = code.raw.index("\n", start)
-                cond_start, cond_end = max(func_start, prev_cond_end), after_line
+                after_line = code.raw.index('\n', start)
+                cond_start, cond_end = (
+                    max(func_start, prev_cond_end),
+                    after_line,
+                )
                 prev_cond_end = after_line
 
             cond = code.raw[cond_start:cond_end]
             callee = None
 
-            has_constant = search(r"\(\d+", cond) or search(
-                r"\([a-zA-Z_]\w*, \d+", cond
+            has_constant = search(r'\(\d+', cond) or search(
+                r'\([a-zA-Z_]\w*, \d+', cond
             )
 
             separate_tag = False
             if has_constant:
                 # Parse the field number from method arguments
                 shift = False
-                fnumber = search(r"\((\d+), ", cond)
+                fnumber = search(r'\((\d+), ', cond)
                 if not fnumber:
-                    fnumber = search(r"(?<!put)\([a-zA-Z_]\w*, (\d+)", cond)
+                    fnumber = search(r'(?<!put)\([a-zA-Z_]\w*, (\d+)', cond)
                 if not fnumber:
-                    fnumber = search(r"\((\d+)\)", cond)
+                    fnumber = search(r'\((\d+)\)', cond)
                     separate_tag = True
                     assert fnumber
                     callee = jar.decomp_func(call) + cond
-                    if "<< 3" not in callee:
+                    if '<< 3' not in callee:
                         shift = True
                 fnumber = int(fnumber.group(1))
                 if shift:
@@ -638,12 +706,16 @@ def extract_lite(
 
             take_packed = separate_tag or not has_constant
 
-            is_map_continuation = ".hasNext" in cond and ".iterator" not in cond
+            is_map_continuation = (
+                '.hasNext' in cond and '.iterator' not in cond
+            )
 
             # Based on field number, load back information from step 1
 
             if fnumber not in fields:
-                print("Note: extension data ignored, extensions are not supported yet")
+                print(
+                    'Note: extension data ignored, extensions are not supported yet'
+                )
                 continue
             field = fields[fnumber]
 
@@ -651,44 +723,44 @@ def extract_lite(
 
             # Store condition line (if any) for optional processing of step 3
             if from_condition:
-                cond_line = cond.split("\n")[0].strip()
-                if ";" in cond_line:
-                    cond_line = sub(r"^[\w\s$]+", "", cond_line.split(";")[1])
+                cond_line = cond.split('\n')[0].strip()
+                if ';' in cond_line:
+                    cond_line = sub(r'^[\w\s$]+', '', cond_line.split(';')[1])
                 cond_lines[cond_line] = fnumber
-                assert "int " not in cond_line
+                assert 'int ' not in cond_line
 
             # Perform a few checks about what we couldn't see from step 1
 
-            flabel = "optional"
-            if "for(" in cond or "while(" in cond:
-                flabel = "repeated"
-            elif "if(" not in cond:
-                flabel = "required"
+            flabel = 'optional'
+            if 'for(' in cond or 'while(' in cond:
+                flabel = 'repeated'
+            elif 'if(' not in cond:
+                flabel = 'required'
 
-            if ftype in ("uint32", "int64"):
+            if ftype in ('uint32', 'int64'):
                 if not callee:
                     callee = jar.decomp_func(call) + cond
 
                 # Don't inherit signedness from the call that writes
                 # tag number, if separate
                 if (
-                    call_args == "int"
-                    and code.raw[start:].split("(")[1].split(")")[0].isdigit()
+                    call_args == 'int'
+                    and code.raw[start:].split('(')[1].split(')')[0].isdigit()
                 ):
                     callee = cond
 
-                if " >= 0" in callee:
+                if ' >= 0' in callee:
                     ftype = ftype[-5:]
-                if " << 1" in callee:
-                    ftype = "s" + ftype[-5:]
+                if ' << 1' in callee:
+                    ftype = 's' + ftype[-5:]
 
             # Look for enums
-            if ftype == "int32":
+            if ftype == 'int32':
                 for start2, (call2, _) in code.method_calls.items():
                     _, call2_obj, _, _ = call2
 
                     if cond_start < start2 < cond_end and call2_obj in enums:
-                        ftype = "enum"
+                        ftype = 'enum'
                         fenumormsg = call2_obj
                         break
 
@@ -698,44 +770,46 @@ def extract_lite(
             # in the code, lists of strings mean search for a local
             # method call, then for variable name in this method's code.
 
-            if not var or (has_constant and not shift and not is_map_continuation):
+            if not var or (
+                has_constant and not shift and not is_map_continuation
+            ):
                 var = None
                 regexps = [
-                    r" < ([\w$]+)\.(?:size|length)",
-                    r"([\w$]+)\.(?:size\(\)|length) > ",
-                    r" >= ([\w$]+)\.(?:size\(\)|length)",
+                    r' < ([\w$]+)\.(?:size|length)',
+                    r'([\w$]+)\.(?:size\(\)|length) > ',
+                    r' >= ([\w$]+)\.(?:size\(\)|length)',
                     [
-                        r"([\w$]+)\(\)\.(?:size\(\)|length)",
-                        r"return ([a-zA-Z_][\w$]*);",
-                        r"return new [\w.$]+\(([a-zA-Z_][\w$]*),",
+                        r'([\w$]+)\(\)\.(?:size\(\)|length)',
+                        r'return ([a-zA-Z_][\w$]*);',
+                        r'return new [\w.$]+\(([a-zA-Z_][\w$]*),',
                     ],
-                    r"if\(([\w$]+) [!=]= null\)",
-                    r"if\(\!([\w$]+)\..+?\(\)\)",
-                    r"(?:unmodifiableMap|Arrays\.equals)\(([a-zA-Z_][\w$]*)",
-                    r"Bits\((?:\(+[\w.]+\))?([a-zA-Z_][\w$]*)\)",
-                    r"([a-zA-Z_][\w$]*)\.(?:getMap|entrySet|iterator)\(",
+                    r'if\(([\w$]+) [!=]= null\)',
+                    r'if\(\!([\w$]+)\..+?\(\)\)',
+                    r'(?:unmodifiableMap|Arrays\.equals)\(([a-zA-Z_][\w$]*)',
+                    r'Bits\((?:\(+[\w.]+\))?([a-zA-Z_][\w$]*)\)',
+                    r'([a-zA-Z_][\w$]*)\.(?:getMap|entrySet|iterator)\(',
                     [
-                        r"([a-zA-Z_][\w$]*)\(\)\.(?:getMap|entrySet|iterator)\(",
-                        r"return ([a-zA-Z_][\w$]*);",
+                        r'([a-zA-Z_][\w$]*)\(\)\.(?:getMap|entrySet|iterator)\(',
+                        r'return ([a-zA-Z_][\w$]*);',
                     ],
-                    r" = \(java\.lang\.String\)([a-zA-Z_][\w$]*)",
-                    r", \(java.+?\)([a-zA-Z_][\w$]*)[).]",
+                    r' = \(java\.lang\.String\)([a-zA-Z_][\w$]*)',
+                    r', \(java.+?\)([a-zA-Z_][\w$]*)[).]',
                     [
-                        r"\(\d+, ([a-zA-Z_][\w$]*)\(\)+\)",
-                        r" = \(.+?\)([a-zA-Z_][\w$]*);",
-                        r"return ([a-zA-Z_][\w$]*);",
-                        r" = ([a-zA-Z_][\w$]*);",
+                        r'\(\d+, ([a-zA-Z_][\w$]*)\(\)+\)',
+                        r' = \(.+?\)([a-zA-Z_][\w$]*);',
+                        r'return ([a-zA-Z_][\w$]*);',
+                        r' = ([a-zA-Z_][\w$]*);',
                     ],
-                    r"\s+([a-zA-Z_][\w$]*)\.[\w$]+\(\);",
-                    r"\d+, [\w$]+\.\w+\(([a-zA-Z_][\w$]*)\)",
-                    r", ([a-zA-Z_][\w$]*)[).]",
-                    r"(?<!flag)(?<!flag\d) = ([a-zA-Z_][\w$]*);",
-                    r" = ([a-zA-Z_][\w$]*)\[",
-                    r" = \(.+?\)([a-zA-Z_][\w$]*)",
-                    r" = \(\(.+?\)([a-zA-Z_][\w$]*)\)\.",
-                    r" = ([a-zA-Z_][\w$]*);",
-                    r", \(.+?\)([a-zA-Z_][\w$]*)[).]",
-                    r"\(\!?([a-zA-Z_][\w$]*)\)",
+                    r'\s+([a-zA-Z_][\w$]*)\.[\w$]+\(\);',
+                    r'\d+, [\w$]+\.\w+\(([a-zA-Z_][\w$]*)\)',
+                    r', ([a-zA-Z_][\w$]*)[).]',
+                    r'(?<!flag)(?<!flag\d) = ([a-zA-Z_][\w$]*);',
+                    r' = ([a-zA-Z_][\w$]*)\[',
+                    r' = \(.+?\)([a-zA-Z_][\w$]*)',
+                    r' = \(\(.+?\)([a-zA-Z_][\w$]*)\)\.',
+                    r' = ([a-zA-Z_][\w$]*);',
+                    r', \(.+?\)([a-zA-Z_][\w$]*)[).]',
+                    r'\(\!?([a-zA-Z_][\w$]*)\)',
                 ]
 
                 for regex in regexps:
@@ -748,11 +822,13 @@ def extract_lite(
                             call_sig, _ = code.method_loc_calls[
                                 cond_start + func.start(1)
                             ]
-                            func = code.get_method_unfold(call_sig, unfold=False)
+                            func = code.get_method_unfold(
+                                call_sig, unfold=False
+                            )
                             for regex2 in regex[1:]:
                                 if not var:
                                     var = search(regex2, func)
-                    if var and var.group(1) in ("super", "false", "true"):
+                    if var and var.group(1) in ('super', 'false', 'true'):
                         var = None
                     if var:
                         break
@@ -764,38 +840,38 @@ def extract_lite(
                 # Search for the line defining the default value for this variable
 
                 fdefault = findall(
-                    r"\s+(?:super\.)?%s(?:\[\])* = (.+?);" % escape(var),
+                    r'\s+(?:super\.)?%s(?:\[\])* = (.+?);' % escape(var),
                     code.raw,
                     flags=MULTILINE,
                 )
                 if not fdefault:
-                    fdefault = ["null"]
+                    fdefault = ['null']
                 fdefault = next(
-                    (i for i in fdefault if i not in ("0", "null", "false")),
+                    (i for i in fdefault if i not in ('0', 'null', 'false')),
                     fdefault[0],
                 )
 
                 # Check its type for an embedded message or group, too
 
                 fdefault_type = search(
-                    r"([\w.$]+?) %s(?:\[\])*(?: =|;)" % escape(var),
+                    r'([\w.$]+?) %s(?:\[\])*(?: =|;)' % escape(var),
                     code.raw,
                     flags=MULTILINE,
                 )
                 if fdefault_type and fdefault_type.group(1) in gen_classes:
                     fenumormsg = fdefault_type.group(1)
-                    if ftype == "bytes":
-                        ftype = "message"
+                    if ftype == 'bytes':
+                        ftype = 'message'
 
                 # Parse default value if it denotes a message type
-                if ".DEFAULT_INSTANCE" in fdefault:
+                if '.DEFAULT_INSTANCE' in fdefault:
                     fenumormsg = (
-                        fdefault.split(".DEFAULT_INSTANCE")[0]
-                        .split("(")[-1]
-                        .split(", ")[-1]
+                        fdefault.split('.DEFAULT_INSTANCE')[0]
+                        .split('(')[-1]
+                        .split(', ')[-1]
                     )
 
-            if fdefault == "null":
+            if fdefault == 'null':
                 fdefault = None
 
             if (
@@ -806,37 +882,50 @@ def extract_lite(
             # Look for MapEntryLite.serializeTo() or MapEntry.newBuilderForType()
             else:
                 map_cls = search(
-                    r"([\w.$]+)\.[\w$]+$", code.raw[:start].split("\n")[-1]
+                    r'([\w.$]+)\.[\w$]+$', code.raw[:start].split('\n')[-1]
                 )
                 map_cls = map_cls.group(1) if map_cls else call_obj
                 if call_obj.startswith(map_cls):
-                    map_cls = search(r" = ([\w$.]+)\.\w+;", cond)  # Handle inlined call
+                    map_cls = search(
+                        r' = ([\w$.]+)\.\w+;', cond
+                    )  # Handle inlined call
                     if not map_cls:
-                        fields[fnumber] = (flabel, ftype, fenumormsg, fdefault, None)
+                        fields[fnumber] = (
+                            flabel,
+                            ftype,
+                            fenumormsg,
+                            fdefault,
+                            None,
+                        )
                         continue
                     map_cls = map_cls.group(1)
                 map_code = jar.decomp(map_cls, True).raw
 
                 # Look for MapEntryLite.newDefaultInstance()
                 args = (
-                    map_code.split("static \n")[1]
-                    .split("(", 1)[1]
-                    .split("\n")[0]
-                    .split(", ")
+                    map_code.split('static \n')[1]
+                    .split('(', 1)[1]
+                    .split('\n')[0]
+                    .split(', ')
                 )
                 if len(args) == 5:
                     args.pop(0)
-                ftype1, fmsg1, ftype2, fmsg2 = args[0], args[1], args[2], args[3]
+                ftype1, fmsg1, ftype2, fmsg2 = (
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                )
 
                 fmsg1 = (
-                    fmsg1.split("(")[1].rsplit(".", 2)[0]
-                    if ".valueOf(" in fmsg1
-                    else fmsg1.rsplit(".", 1)[0]
+                    fmsg1.split('(')[1].rsplit('.', 2)[0]
+                    if '.valueOf(' in fmsg1
+                    else fmsg1.rsplit('.', 1)[0]
                 )
                 fmsg2 = (
-                    fmsg2.split("(")[1].rsplit(".", 2)[0]
-                    if ".valueOf(" in fmsg2
-                    else fmsg2.rsplit(".", 1)[0]
+                    fmsg2.split('(')[1].rsplit('.', 2)[0]
+                    if '.valueOf(' in fmsg2
+                    else fmsg2.rsplit('.', 1)[0]
                 )
 
                 fields[fnumber] = create_map(
@@ -859,13 +948,13 @@ def extract_lite(
     """
 
     case = split(
-        r" == 1\)[\n{ ]+return DEFAULT_INSTANCE;(?:[\n ]+\}\n)?",
+        r' == 1\)[\n{ ]+return DEFAULT_INSTANCE;(?:[\n ]+\}\n)?',
         code.raw,
         flags=MULTILINE,
     )
     if len(case) > 1:
         case = case[1]
-        case = case.split("\n_")[0]
+        case = case.split('\n_')[0]
 
         for cond in cond_lines:
             if cond in case:
@@ -873,19 +962,19 @@ def extract_lite(
 
                 flabel, ftype, fenumormsg, fdefault, var = fields[fnumber]
 
-                if ftype in ("message", "group", "bytes"):
+                if ftype in ('message', 'group', 'bytes'):
                     body = case.split(cond, 1)[1]
                     for cond2 in set(cond_lines) - {cond}:
                         body = body.split(cond2)[0]
 
-                    if ".DEFAULT_INSTANCE)" in body:
+                    if '.DEFAULT_INSTANCE)' in body:
                         fenumormsg = (
-                            body.split(".DEFAULT_INSTANCE)")[0]
-                            .split("(")[-1]
-                            .split(", ")[-1]
+                            body.split('.DEFAULT_INSTANCE)')[0]
+                            .split('(')[-1]
+                            .split(', ')[-1]
                         )
-                        if ftype == "bytes":
-                            ftype = "message"
+                        if ftype == 'bytes':
+                            ftype = 'message'
 
                 fields[fnumber] = (flabel, ftype, fenumormsg, fdefault, var)
 
@@ -896,7 +985,7 @@ def extract_lite(
     """
 
     message = DescriptorProto()
-    message.name = cls.rsplit(".", 1)[-1]
+    message.name = cls.rsplit('.', 1)[-1]
 
     seen_vars = {}
     my_namer = namer()
@@ -904,23 +993,26 @@ def extract_lite(
 
     # Are these variables proguarded and should we rename these?
     use_namer = all(
-        not i[4] or len(i[4]) < 3 or i[4].endswith("_fld") for i in fields.values()
+        not i[4] or len(i[4]) < 3 or i[4].endswith('_fld')
+        for i in fields.values()
     )
 
-    all_vars = [field[4] or "unk" for field in fields.values()]
+    all_vars = [field[4] or 'unk' for field in fields.values()]
 
-    for number, (flabel, ftype, fenumormsg, fdefault, var) in sorted(fields.items()):
+    for number, (flabel, ftype, fenumormsg, fdefault, var) in sorted(
+        fields.items()
+    ):
         field = message.field.add()
-        var = var or "unk"
-        flabel = flabel or "optional"
+        var = var or 'unk'
+        flabel = flabel or 'optional'
 
-        if ftype == "group" and not fenumormsg:
-            ftype = "bytes"
+        if ftype == 'group' and not fenumormsg:
+            ftype = 'bytes'
 
-        if ftype == "enum" and fenumormsg not in msg_path_to_obj:
+        if ftype == 'enum' and fenumormsg not in msg_path_to_obj:
             create_enum(jar, enums, fenumormsg, msg_path_to_obj)
 
-        if ftype == "enum" and fdefault and fdefault.lstrip("-").isnumeric():
+        if ftype == 'enum' and fdefault and fdefault.lstrip('-').isnumeric():
             fdefault = next(
                 (
                     repr(x.name)
@@ -933,14 +1025,19 @@ def extract_lite(
         if use_namer:
             disp_var = next(my_namer)
         else:
-            disp_var = var.rstrip("_")
+            disp_var = var.rstrip('_')
             if disp_var[0].islower():
-                disp_var = sub("[A-Z]", lambda x: "_" + x.group(0).lower(), disp_var)
+                disp_var = sub(
+                    '[A-Z]', lambda x: '_' + x.group(0).lower(), disp_var
+                )
 
         if all_vars.count(var) > 1:
             # assert flabel == 'optional'
             if var not in oneofs:
-                oneofs[var] = (len(message.oneof_decl), message.oneof_decl.add())
+                oneofs[var] = (
+                    len(message.oneof_decl),
+                    message.oneof_decl.add(),
+                )
                 oneofs[var][1].name = disp_var
             if not use_namer or oneofs[var][1].name == disp_var:
                 disp_var = next(my_namer)
@@ -950,8 +1047,8 @@ def extract_lite(
         if (
             fdefault
             and (var not in seen_vars or seen_vars[var] == (flabel, ftype))
-            and ftype not in ("message", "group", "bytes")
-            and flabel != "repeated"
+            and ftype not in ('message', 'group', 'bytes')
+            and flabel != 'repeated'
         ):
             parse_default(field, ftype, fdefault)
 
@@ -961,8 +1058,10 @@ def extract_lite(
         field.type = type_consts[ftype]
 
         if fenumormsg:
-            field.type_name = "." + fenumormsg
-            msg_to_referrers[fenumormsg].append((field.name, cls, ftype == "group"))
+            field.type_name = '.' + fenumormsg
+            msg_to_referrers[fenumormsg].append(
+                (field.name, cls, ftype == 'group')
+            )
 
         seen_vars[var] = (flabel, ftype)
 
@@ -972,7 +1071,7 @@ def extract_lite(
 def namer():
     for length in count(1):
         for name in product(ascii_lowercase, repeat=length):
-            yield "".join(name)
+            yield ''.join(name)
 
 
 """
@@ -981,25 +1080,25 @@ def namer():
 
 
 def parse_default(field, ftype, fdefault):
-    if not (ftype == "bool" and fdefault == "true"):
+    if not (ftype == 'bool' and fdefault == 'true'):
         try:
-            fdefault = literal_eval(fdefault.rstrip("LDF"))
+            fdefault = literal_eval(fdefault.rstrip('LDF'))
         except (ValueError, SyntaxError):
             fdefault = None
 
     if isinstance(fdefault, int):
-        if ftype[0] != "u" and ftype[:5] != "fixed":
+        if ftype[0] != 'u' and ftype[:5] != 'fixed':
             if fdefault >> 63:
                 fdefault = c_long(fdefault).value
-            elif fdefault >> 31 and ftype[-2:] != "64":
+            elif fdefault >> 31 and ftype[-2:] != '64':
                 fdefault = c_int(fdefault).value
         else:
             fdefault &= (1 << int(ftype[-2:])) - 1
 
-        if ftype == "float" and abs(fdefault) >> 23:
-            fdefault = unpack("=f", pack("=i", fdefault))[0]
-        elif ftype == "double" and abs(fdefault) >> 52:
-            fdefault = unpack("=d", pack("=q", fdefault))[0]
+        if ftype == 'float' and abs(fdefault) >> 23:
+            fdefault = unpack('=f', pack('=i', fdefault))[0]
+        elif ftype == 'double' and abs(fdefault) >> 52:
+            fdefault = unpack('=d', pack('=q', fdefault))[0]
 
     if fdefault:
         field.default_value = str(fdefault)
@@ -1015,11 +1114,11 @@ def create_enum(jar, enums, fenum, msg_path_to_obj):
         enum_code = jar.decomp(enums[fenum], True).raw
 
         enum = EnumDescriptorProto()
-        enum.name = fenum.split(".")[-1]
+        enum.name = fenum.split('.')[-1]
         for fname, fnumber in findall(
             r'(?:[\w.$]+|<init>)\("(.+?)", \d+, (-?\d+)[LDF]?\);', enum_code
         ):
-            if (fname, fnumber) != ("UNRECOGNIZED", "-1"):
+            if (fname, fnumber) != ('UNRECOGNIZED', '-1'):
                 value = enum.value.add()
                 value.name = fname
                 value.number = int(fnumber)
@@ -1043,16 +1142,16 @@ def create_map(
 ):
     map_obj = DescriptorProto()
     map_obj.options.map_entry = True
-    map_obj.name = "%s$map%d" % (cls.split(".")[-1], number)
+    map_obj.name = '%s$map%d' % (cls.split('.')[-1], number)
 
     map_full_name = map_obj.name
     if pkg:
-        map_full_name = pkg + "." + map_full_name
+        map_full_name = pkg + '.' + map_full_name
 
     if map_full_name not in msg_path_to_obj:
         for fnumber, fname, ftype, fmsg in (
-            (1, "key", ftype1, fmsg1),
-            (2, "value", ftype2, fmsg2),
+            (1, 'key', ftype1, fmsg1),
+            (2, 'value', ftype2, fmsg2),
         ):
             field = map_obj.field.add()
 
@@ -1060,10 +1159,12 @@ def create_map(
                 if ftype.isnumeric():
                     ftype = int(ftype)
                 else:
-                    enum_name, enum_var = ftype.rsplit(".", 1)
+                    enum_name, enum_var = ftype.rsplit('.', 1)
                     enum_code = jar.decomp(enum_name, True).raw
                     ftype = type_consts[
-                        enum_code.split(enum_var + " = new ")[1].split('"')[1].lower()
+                        enum_code.split(enum_var + ' = new ')[1]
+                        .split('"')[1]
+                        .lower()
                     ]
 
             if fmsg and ftype in (
@@ -1071,12 +1172,16 @@ def create_map(
                 field.TYPE_ENUM,
                 field.TYPE_MESSAGE,
             ):
-                if "." not in fmsg and pkg:
-                    fmsg = pkg + "." + fmsg
+                if '.' not in fmsg and pkg:
+                    fmsg = pkg + '.' + fmsg
                 msg_to_referrers[fmsg].append(
-                    (fname, map_full_name, ftype == FieldDescriptorProto.TYPE_GROUP)
+                    (
+                        fname,
+                        map_full_name,
+                        ftype == FieldDescriptorProto.TYPE_GROUP,
+                    )
                 )
-                field.type_name = "." + fmsg
+                field.type_name = '.' + fmsg
 
             if ftype == field.TYPE_ENUM:
                 if fmsg:
@@ -1090,7 +1195,7 @@ def create_map(
 
         msg_path_to_obj[map_full_name] = map_obj
 
-    return ("repeated", "message", map_full_name, None, var)
+    return ('repeated', 'message', map_full_name, None, var)
 
 
 """
@@ -1112,32 +1217,35 @@ def extract_j2me(
     msg_to_referrers,
 ):
     code = jar.decomp(cls, True)
-    cls = cls.replace("$", ".")
+    cls = cls.replace('$', '.')
 
     if not code.raw:
-        print("(Jad failed)")
+        print('(Jad failed)')
         return
 
     """
     First step: look for calls to ProtoBufType.addElement(int, int, Object)
     """
 
-    code = sub(r"(?:new )?[\w$.]+\((-?\d+)[LDF]?\)", r"\1", code.raw)
+    code = sub(r'(?:new )?[\w$.]+\((-?\d+)[LDF]?\)', r'\1', code.raw)
     fields_for_msg = defaultdict(str)
 
-    for var in findall(r"(\w+) = new ", code):
+    for var in findall(r'(\w+) = new ', code):
         fields_for_msg[var]
 
     while True:
         # Case 1: handle embedded groups
         decl = list(
             finditer(
-                r'(\(new \w+\(("\w+")\)\)(?=((?:\.\w+\(\d+, \d+, .+?\))+)\)))', code
+                r'(\(new \w+\(("\w+")\)\)(?=((?:\.\w+\(\d+, \d+, .+?\))+)\)))',
+                code,
             )
         )[::-1]
         if not decl:
             # Case 2: general case, handle messages
-            decl = list(finditer(r"( (\w+)(?=((?:\.\w+\(\d+, \d+, .+?\))+);))", code))
+            decl = list(
+                finditer(r'( (\w+)(?=((?:\.\w+\(\d+, \d+, .+?\))+);))', code)
+            )
         if not decl:
             break
         prefix, var, fields = decl[0].groups()
@@ -1146,13 +1254,13 @@ def extract_j2me(
             var = var.strip('"')
             # If group, avoid name conflicts
             while var in fields_for_msg:
-                var += "_"
+                var += '_'
         else:
             # If message, handle object variable reassignements
             public_var = findall(
-                r" %s = ([a-zA-Z_][\w$]*);" % var, code[: decl[0].start()]
+                r' %s = ([a-zA-Z_][\w$]*);' % var, code[: decl[0].start()]
             )
-            if public_var and public_var[-1] != "null":
+            if public_var and public_var[-1] != 'null':
                 var = public_var[-1]
 
         code = code.replace(prefix + fields, var, 1)
@@ -1170,12 +1278,12 @@ def extract_j2me(
         my_namer = namer()
         summary = {}
 
-        print("\nIn %s.%s:" % (cls, var))
+        print('\nIn %s.%s:' % (cls, var))
         message.name = var
 
         if fields:
             for ftypeandlabel, fnumber, fdefaultormsg in findall(
-                r"\.\w+\((\d+), (\d+), (.+?)\)", fields
+                r'\.\w+\((\d+), (\d+), (.+?)\)', fields
             ):
                 field = message.field.add()
 
@@ -1183,56 +1291,58 @@ def extract_j2me(
                 # Use bytes and string instead of data and text (Protobuf 1 types).
 
                 types = {
-                    17: "double",
-                    18: "float",
-                    19: "int64",
-                    20: "uint64",
-                    21: "int32",
-                    22: "fixed64",
-                    23: "fixed32",
-                    24: "bool",
-                    25: "bytes",
-                    26: "group",
-                    27: "message",
-                    28: "string",
-                    29: "uint32",
-                    30: "int32",
-                    31: "sfixed32",
-                    32: "sfixed64",
-                    33: "sint32",
-                    34: "sint64",
-                    35: "bytes",
-                    36: "string",
+                    17: 'double',
+                    18: 'float',
+                    19: 'int64',
+                    20: 'uint64',
+                    21: 'int32',
+                    22: 'fixed64',
+                    23: 'fixed32',
+                    24: 'bool',
+                    25: 'bytes',
+                    26: 'group',
+                    27: 'message',
+                    28: 'string',
+                    29: 'uint32',
+                    30: 'int32',
+                    31: 'sfixed32',
+                    32: 'sfixed64',
+                    33: 'sint32',
+                    34: 'sint64',
+                    35: 'bytes',
+                    36: 'string',
                 }
                 ftype = types[int(ftypeandlabel) & 0xFF]
 
-                labels = {1: "required", 2: "optional", 4: "repeated"}
+                labels = {1: 'required', 2: 'optional', 4: 'repeated'}
                 flabel = labels[int(ftypeandlabel) >> 8]
 
                 field.name = next(my_namer)
                 field.number = int(fnumber)
                 field.label = label_consts[flabel]
 
-                if fdefaultormsg != "null":
-                    if ftype in ("group", "message"):
-                        if "." in fdefaultormsg:
-                            field.type_name = "." + fdefaultormsg
+                if fdefaultormsg != 'null':
+                    if ftype in ('group', 'message'):
+                        if '.' in fdefaultormsg:
+                            field.type_name = '.' + fdefaultormsg
                             msg_to_referrers[fdefaultormsg].append(
-                                (field.name, cls + "." + var, ftype == "group")
+                                (field.name, cls + '.' + var, ftype == 'group')
                             )
 
                             if (
                                 fdefaultormsg not in msg_path_to_obj
                             ):  # Classes empty or to be created
-                                msg_path_to_obj[fdefaultormsg] = DescriptorProto()
+                                msg_path_to_obj[fdefaultormsg] = (
+                                    DescriptorProto()
+                                )
                                 msg_path_to_obj[
                                     fdefaultormsg
-                                ].name = fdefaultormsg.split(".")[-1]
+                                ].name = fdefaultormsg.split('.')[-1]
 
                         else:
-                            field.type_name = "." + cls + "." + fdefaultormsg
-                            msg_to_referrers[cls + "." + fdefaultormsg].append(
-                                (field.name, cls + "." + var, ftype == "group")
+                            field.type_name = '.' + cls + '.' + fdefaultormsg
+                            msg_to_referrers[cls + '.' + fdefaultormsg].append(
+                                (field.name, cls + '.' + var, ftype == 'group')
                             )
 
                     else:
@@ -1244,26 +1354,28 @@ def extract_j2me(
                 else:
                     fdefaultormsg = None
 
-                    if ftype in ("group", "message"):
-                        ftype = "bytes"
+                    if ftype in ('group', 'message'):
+                        ftype = 'bytes'
 
                 field.type = type_consts[ftype]
 
                 summary[int(fnumber)] = (flabel, ftype, fdefaultormsg)
 
-        msg_path_to_obj[cls + "." + var] = message
+        msg_path_to_obj[cls + '.' + var] = message
         print(summary)
 
 
-type_consts = {k.split("_")[1].lower(): v for k, v in FieldDescriptorProto.Type.items()}
+type_consts = {
+    k.split('_')[1].lower(): v for k, v in FieldDescriptorProto.Type.items()
+}
 label_consts = {
-    k.split("_")[1].lower(): v for k, v in FieldDescriptorProto.Label.items()
+    k.split('_')[1].lower(): v for k, v in FieldDescriptorProto.Label.items()
 }
 
 
 def main():
-    extractor_main("jar_extract")
+    extractor_main('jar_extract')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -31,7 +31,9 @@ type_checkers.SupportsOpenEnums = lambda x: True
 # from generated classes),
 from google.protobuf import descriptor
 
-descriptor._ParseOptions = lambda msg, data: msg.FromString(data.replace(b"8\001", b""))
+descriptor._ParseOptions = lambda msg, data: msg.FromString(
+    data.replace(b'8\001', b'')
+)
 
 # And then do Protobuf imports
 from google.protobuf.internal.type_checkers import _VALUE_CHECKERS
@@ -48,28 +50,30 @@ class MyFrame(QWebEngineView):
     def update_frame(self, data, text, url, mime, pbresp=None):
         self.setEnabled(False)  # prevent from taking focus
 
-        out_mime = "text/plain; charset=utf-8"
+        out_mime = 'text/plain; charset=utf-8'
 
-        if "image" in mime:
+        if 'image' in mime:
             out_mime = mime
 
-        elif "html" in mime:
-            if "/embed" in url:
-                text = text.replace("<head>", "<head><script>opener=1</script>")
-            out_mime = "text/html; charset=utf-8"
+        elif 'html' in mime:
+            if '/embed' in url:
+                text = text.replace(
+                    '<head>', '<head><script>opener=1</script>'
+                )
+            out_mime = 'text/html; charset=utf-8'
             data = text
 
-        elif "json" in mime:
+        elif 'json' in mime:
             if text.startswith(")]}'\n"):
                 text = text[5:]
             if text.endswith('/*""*/'):
                 text = text[:-6]
 
             text = (
-                text.replace("[,", "[null,")
-                .replace(",]", ",null]")
-                .replace(",,", ",null,")
-                .replace(",,", ",null,")
+                text.replace('[,', '[null,')
+                .replace(',]', ',null]')
+                .replace(',,', ',null,')
+                .replace(',,', ',null,')
             )
 
             try:
@@ -77,36 +81,38 @@ class MyFrame(QWebEngineView):
             except Exception:
                 pass
 
-        elif "protobuf" in mime:
+        elif 'protobuf' in mime:
             data = self.parse_protobuf(data, pbresp)
 
-        elif "kmz" in mime:
+        elif 'kmz' in mime:
             with ZipFile(BytesIO(data)) as fd:
-                if fd.namelist() == ["doc.kml"]:
-                    data = parseString(fd.read("doc.kml")).toprettyxml(indent="    ")
+                if fd.namelist() == ['doc.kml']:
+                    data = parseString(fd.read('doc.kml')).toprettyxml(
+                        indent='    '
+                    )
                 else:
-                    data = "\n".join(fd.namelist())
+                    data = '\n'.join(fd.namelist())
 
-        elif data.startswith(b"XHR1"):
+        elif data.startswith(b'XHR1'):
             data = BytesIO(data[4:])
-            out = b""
+            out = b''
 
             while True:
                 header = data.read(6)
                 if not header:
                     break
-                size, index = unpack(">IBx", header)
+                size, index = unpack('>IBx', header)
 
                 dec = bytes([i ^ 0x9B for i in data.read(size - 2)])
-                if dec.startswith(b"\x78\x9c"):
+                if dec.startswith(b'\x78\x9c'):
                     dec = decompress(dec)
 
-                out += b"%d %s\n" % (index, b"-" * 15)
+                out += b'%d %s\n' % (index, b'-' * 15)
                 out += self.parse_protobuf(dec, pbresp)
 
             data = out
 
-        elif "text/" in mime:
+        elif 'text/' in mime:
             pass
 
         else:
@@ -126,12 +132,12 @@ class MyFrame(QWebEngineView):
                     break
 
             if not dec:
-                dec = run(["hexdump", "-C"], input=data, stdout=PIPE).stdout
+                dec = run(['hexdump', '-C'], input=data, stdout=PIPE).stdout
 
             data = dec[:100000]
 
         if isinstance(data, str):
-            data = data.encode("utf8")
+            data = data.encode('utf8')
         self.setContent(QByteArray(data), out_mime, QUrl(url))
 
         self.setEnabled(True)
@@ -139,11 +145,11 @@ class MyFrame(QWebEngineView):
     def parse_protobuf(self, data, pbresp):
         if pbresp:
             try:
-                return str(pbresp.FromString(data)).encode("utf8")
+                return str(pbresp.FromString(data)).encode('utf8')
             except Exception:
                 pass
         return run(
-            [protoc, "--decode_raw"], input=data, stdout=PIPE, stderr=PIPE
+            [protoc, '--decode_raw'], input=data, stdout=PIPE, stderr=PIPE
         ).stdout
 
 
@@ -164,7 +170,7 @@ class QwordSpinBox(QAbstractSpinBox):
         self.int_ = float if float_ else int
 
         rx = QRegularExpression(
-            r"-?\d{0,20}(?:\.\d{0,20})?" if float_ else r"-?\d{0,20}"
+            r'-?\d{0,20}(?:\.\d{0,20})?' if float_ else r'-?\d{0,20}'
         )
         validator = QRegularExpressionValidator(self)
         validator.setRegularExpression(rx)
@@ -188,7 +194,7 @@ class QwordSpinBox(QAbstractSpinBox):
         try:
             value = self.int_(value)
             value2 = max(self._minimum, min(self._maximum, value))
-            if update or not self._lineEdit.text().strip("-"):
+            if update or not self._lineEdit.text().strip('-'):
                 self.valueChanged.emit(value2)
             if value != value2 or change:
                 self._lineEdit.setText(str(value2))
@@ -222,24 +228,24 @@ item_indices = defaultdict(list)
 class ProtobufItem(QTreeWidgetItem):
     def __init__(self, item, ds, app, path):
         type_txt = {
-            1: "double",
-            2: "float",
-            3: "int64",
-            4: "uint64",
-            5: "int32",
-            6: "fixed64",
-            7: "fixed32",
-            8: "bool",
-            9: "string",
-            10: "group",
-            11: "",
-            12: "bytes",
-            13: "uint32",
-            14: "enum",
-            15: "sfixed32",
-            16: "sfixed64",
-            17: "sint32",
-            18: "sint64",
+            1: 'double',
+            2: 'float',
+            3: 'int64',
+            4: 'uint64',
+            5: 'int32',
+            6: 'fixed64',
+            7: 'fixed32',
+            8: 'bool',
+            9: 'string',
+            10: 'group',
+            11: '',
+            12: 'bytes',
+            13: 'uint32',
+            14: 'enum',
+            15: 'sfixed32',
+            16: 'sfixed64',
+            17: 'sint32',
+            18: 'sint64',
         }[ds.type]
 
         self.ds = ds
@@ -256,13 +262,15 @@ class ProtobufItem(QTreeWidgetItem):
         self.is_msg = ds.cpp_type == ds.CPPTYPE_MESSAGE
         self.setting_default = False
 
-        self.full_name = self.app.ds_full_names.setdefault(id(ds), ds.full_name)
+        self.full_name = self.app.ds_full_names.setdefault(
+            id(ds), ds.full_name
+        )
 
         super().__init__(
             item,
             [
-                self.full_name.split(".")[-1] + "+" * self.repeated + "  ",
-                type_txt + "  ",
+                self.full_name.split('.')[-1] + '+' * self.repeated + '  ',
+                type_txt + '  ',
             ],
         )
 
@@ -285,9 +293,9 @@ class ProtobufItem(QTreeWidgetItem):
         elif ds.cpp_type == ds.CPPTYPE_STRING:
             self.widget = QLineEdit()
             self.widget.setFrame(False)
-            self.widget.setStyleSheet("padding: 1px 0")
+            self.widget.setStyleSheet('padding: 1px 0')
             self.widget.textEdited.connect(self.value_changed)
-            default = "" if ds.type != ds.TYPE_BYTES else b""
+            default = '' if ds.type != ds.TYPE_BYTES else b''
 
         else:
             if ds.cpp_type in (ds.CPPTYPE_DOUBLE, ds.CPPTYPE_FLOAT):
@@ -295,10 +303,13 @@ class ProtobufItem(QTreeWidgetItem):
                 default = 0.0
             else:
                 cpp_type = (
-                    ds.cpp_type if ds.cpp_type != ds.CPPTYPE_ENUM else ds.CPPTYPE_INT32
+                    ds.cpp_type
+                    if ds.cpp_type != ds.CPPTYPE_ENUM
+                    else ds.CPPTYPE_INT32
                 )
                 self.widget = QwordSpinBox(
-                    _VALUE_CHECKERS[cpp_type]._MIN, _VALUE_CHECKERS[cpp_type]._MAX
+                    _VALUE_CHECKERS[cpp_type]._MIN,
+                    _VALUE_CHECKERS[cpp_type]._MAX,
                 )
                 default = 0
 
@@ -307,8 +318,8 @@ class ProtobufItem(QTreeWidgetItem):
             self.widget.valueChanged.connect(self.value_changed)
 
         if ds.type == ds.TYPE_ENUM:
-            tooltip = "\n".join(
-                "%d : %s" % (i.number, i.name) for i in ds.enum_type.values
+            tooltip = '\n'.join(
+                '%d : %s' % (i.number, i.name) for i in ds.enum_type.values
             )
             for col in range(self.columnCount()):
                 self.setToolTip(col, tooltip)
@@ -353,7 +364,9 @@ class ProtobufItem(QTreeWidgetItem):
 
             self.void = False
 
-    def setDefault(self, val=None, parent=None, msg=None, index=None, unvoid=True):
+    def setDefault(
+        self, val=None, parent=None, msg=None, index=None, unvoid=True
+    ):
         self.setting_default = True
 
         if parent:
@@ -371,7 +384,9 @@ class ProtobufItem(QTreeWidgetItem):
                 self.widget.setText(val)
             elif isinstance(val, bytes):
                 self.widget.setText(
-                    val.decode("latin1").encode("unicode_escape").decode("latin1")
+                    val.decode('latin1')
+                    .encode('unicode_escape')
+                    .decode('latin1')
                 )
             else:
                 self.widget.setValue(val)
@@ -386,7 +401,11 @@ class ProtobufItem(QTreeWidgetItem):
         if not self.setting_default:
             if self.ds.type == self.ds.TYPE_BYTES:
                 try:
-                    val = val.encode("latin1").decode("unicode_escape").encode("latin1")
+                    val = (
+                        val.encode('latin1')
+                        .decode('unicode_escape')
+                        .encode('latin1')
+                    )
                 except Exception:
                     return
             elif self.ds.type == self.ds.TYPE_BOOL:
@@ -423,7 +442,7 @@ class ProtobufItem(QTreeWidgetItem):
                         self.child(i).self_pb = None
                         self.child(i).update(self.child(i).value)
 
-                if hasattr(self.self_pb, "SetInParent"):
+                if hasattr(self.self_pb, 'SetInParent'):
                     self.self_pb.SetInParent()
 
                 if not self.required:
@@ -466,10 +485,14 @@ class ProtobufItem(QTreeWidgetItem):
                 del self.self_pb[self.index]
                 del item_indices[id(self.self_pb)][self.index]
 
-                for i in range(self.index, len(item_indices[id(self.self_pb)])):
+                for i in range(
+                    self.index, len(item_indices[id(self.self_pb)])
+                ):
                     item_indices[id(self.self_pb)][i].index -= 1
 
-                self.self_pb = None  # So that if we're repeated we're recreated further
+                self.self_pb = (
+                    None  # So that if we're repeated we're recreated further
+                )
                 self.void = True
 
     def duplicate(self, setting_default=False):
@@ -490,8 +513,10 @@ class ProtobufItem(QTreeWidgetItem):
                     index = self.treeWidget().indexOfTopLevelItem(self)
                     self.treeWidget().insertTopLevelItem(index + 1, new_obj)
 
-                if hasattr(new_obj, "widget"):
-                    self.app.fuzzer.pbTree.setItemWidget(new_obj, 2, new_obj.widget)
+                if hasattr(new_obj, 'widget'):
+                    self.app.fuzzer.pbTree.setItemWidget(
+                        new_obj, 2, new_obj.widget
+                    )
 
                 self.dupe_obj = new_obj
                 new_obj.orig_obj = self
@@ -551,12 +576,17 @@ class ProtobufItem(QTreeWidgetItem):
 
     def prompt_rename(self):
         text, good = QInputDialog.getText(
-            self.app.view, " ", "Rename this field:", text=self.text(0).strip("+ ")
+            self.app.view,
+            ' ',
+            'Rename this field:',
+            text=self.text(0).strip('+ '),
         )
         if text:
-            if not match("^[a-zA-Z0-9_]+$", text):
+            if not match('^[a-zA-Z0-9_]+$', text):
                 QMessageBox.warning(
-                    self.app.view, " ", "This is not a valid alphanumeric name."
+                    self.app.view,
+                    ' ',
+                    'This is not a valid alphanumeric name.',
                 )
                 self.prompt_rename()
             else:
@@ -567,8 +597,8 @@ class ProtobufItem(QTreeWidgetItem):
                     pass
                 QMessageBox.warning(
                     self.app.view,
-                    " ",
-                    "Field was not found in .proto, did you edit it elsewhere?",
+                    ' ',
+                    'Field was not found in .proto, did you edit it elsewhere?',
                 )
 
     def do_rename(self, new_name):
@@ -599,16 +629,16 @@ class ProtobufItem(QTreeWidgetItem):
                         file_path = str(proto_path / file_.name)
                         with open(file_path) as fd:
                             lines = fd.readlines()
-                        assert lines[start_line][start_col:end_col] == self.text(
-                            0
-                        ).strip("+ ")
+                        assert lines[start_line][
+                            start_col:end_col
+                        ] == self.text(0).strip('+ ')
 
                         lines[start_line] = (
                             lines[start_line][:start_col]
                             + new_name
                             + lines[start_line][end_col:]
                         )
-                        with open(file_path, "w") as fd:
+                        with open(file_path, 'w') as fd:
                             fd.writelines(lines)
 
                         # Update the name on GUI items corresponding to
@@ -619,21 +649,28 @@ class ProtobufItem(QTreeWidgetItem):
                             obj = obj.orig_obj
                         while obj:
                             obj.full_name = (
-                                obj.full_name.rsplit(".", 1)[0] + "." + new_name
+                                obj.full_name.rsplit('.', 1)[0]
+                                + '.'
+                                + new_name
                             )
                             self.app.ds_full_names[id(obj.ds)] = obj.full_name
-                            obj.setText(0, new_name + "+" * self.repeated + "  ")
+                            obj.setText(
+                                0, new_name + '+' * self.repeated + '  '
+                            )
                             obj = obj.dupe_obj
                         return True
 
     def find_path_for_field(self, msgs, path, cur_name):
         if cur_name:
-            cur_name += "."
+            cur_name += '.'
 
         for i, msg in enumerate(msgs):
-            if self.full_name.startswith(cur_name + msg.name + "."):
+            if self.full_name.startswith(cur_name + msg.name + '.'):
                 for j, field in enumerate(msg.field):
-                    if cur_name + msg.name + "." + field.name == self.full_name:
+                    if (
+                        cur_name + msg.name + '.' + field.name
+                        == self.full_name
+                    ):
                         return [*path, i, 2, j, 1]
 
                 return self.find_path_for_field(
@@ -643,7 +680,7 @@ class ProtobufItem(QTreeWidgetItem):
     def _edit(self, ev=None):
         if not self.widget.hasFocus():
             self.widget.setFocus(Qt.MouseFocusReason)
-            if hasattr(self.widget, "selectAll"):
+            if hasattr(self.widget, 'selectAll'):
                 self.widget.selectAll()
 
 
@@ -655,10 +692,10 @@ class ProtobufItem(QTreeWidgetItem):
 
 class ProtocolDataItem(QTreeWidgetItem):
     def __init__(self, item, name, val, app):
-        super().__init__(item, [name + "  "])
+        super().__init__(item, [name + '  '])
         self.name = name
         self.app = app
-        self.required = "{%s}" % name in self.app.base_url
+        self.required = '{%s}' % name in self.app.base_url
 
         if not self.required:
             self.setCheckState(0, Qt.Checked)
@@ -666,7 +703,7 @@ class ProtocolDataItem(QTreeWidgetItem):
 
         self.widget = QLineEdit()
         self.widget.setFrame(False)
-        self.widget.setStyleSheet("padding: 1px 0")
+        self.widget.setStyleSheet('padding: 1px 0')
         self.widget.textEdited.connect(self.value_changed)
         self.app.fuzzer.getTree.setItemWidget(self, 1, self.widget)
 

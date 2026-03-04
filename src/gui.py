@@ -24,7 +24,7 @@ from binascii import crc32
 from pathlib import Path
 from sys import argv
 
-__import__("sys").path.append(dirname(realpath(__file__)))
+__import__('sys').path.append(dirname(realpath(__file__)))
 
 from utils.common import (
     extractors,
@@ -52,45 +52,63 @@ class PBTKGUI(QApplication):
         super().__init__(argv)
         signal(SIGINT, SIG_DFL)
 
-        views = dirname(realpath(__file__)) + "/views/"
+        views = dirname(realpath(__file__)) + '/views/'
 
         loader = QUiLoader()
         loader.registerCustomWidget(MyFrame)
 
-        self.welcome = loader.load(views + "welcome.ui")
-        self.choose_extractor = loader.load(views + "choose_extractor.ui")
-        self.choose_proto = loader.load(views + "choose_proto.ui")
-        self.create_endpoint = loader.load(views + "create_endpoint.ui")
-        self.choose_endpoint = loader.load(views + "choose_endpoint.ui")
-        self.fuzzer = loader.load(views + "fuzzer.ui")
+        self.welcome = loader.load(views + 'welcome.ui')
+        self.choose_extractor = loader.load(views + 'choose_extractor.ui')
+        self.choose_proto = loader.load(views + 'choose_proto.ui')
+        self.create_endpoint = loader.load(views + 'create_endpoint.ui')
+        self.choose_endpoint = loader.load(views + 'choose_endpoint.ui')
+        self.fuzzer = loader.load(views + 'fuzzer.ui')
 
         self.welcome.step1.clicked.connect(self.load_extractors)
-        self.choose_extractor.rejected.connect(partial(self.set_view, self.welcome))
-        self.choose_extractor.extractors.itemClicked.connect(self.prompt_extractor)
+        self.choose_extractor.rejected.connect(
+            partial(self.set_view, self.welcome)
+        )
+        self.choose_extractor.extractors.itemClicked.connect(
+            self.prompt_extractor
+        )
 
         self.welcome.step2.clicked.connect(self.load_protos)
         self.proto_fs = QFileSystemModel()
         self.choose_proto.protos.setModel(self.proto_fs)
-        self.proto_fs.directoryLoaded.connect(self.choose_proto.protos.expandAll)
+        self.proto_fs.directoryLoaded.connect(
+            self.choose_proto.protos.expandAll
+        )
 
         for i in range(1, self.proto_fs.columnCount()):
             self.choose_proto.protos.hideColumn(i)
         self.choose_proto.protos.setRootIndex(
-            self.proto_fs.index(str(BASE_PATH / "protos"))
+            self.proto_fs.index(str(BASE_PATH / 'protos'))
         )
-        self.choose_proto.rejected.connect(partial(self.set_view, self.welcome))
+        self.choose_proto.rejected.connect(
+            partial(self.set_view, self.welcome)
+        )
         self.choose_proto.protos.clicked.connect(self.new_endpoint)
 
-        self.create_endpoint.transports.itemClicked.connect(self.pick_transport)
-        self.create_endpoint.loadRespPbBtn.clicked.connect(self.load_another_pb)
-        self.create_endpoint.rejected.connect(partial(self.set_view, self.choose_proto))
+        self.create_endpoint.transports.itemClicked.connect(
+            self.pick_transport
+        )
+        self.create_endpoint.loadRespPbBtn.clicked.connect(
+            self.load_another_pb
+        )
+        self.create_endpoint.rejected.connect(
+            partial(self.set_view, self.choose_proto)
+        )
         self.create_endpoint.buttonBox.accepted.connect(self.write_endpoint)
 
         self.welcome.step3.clicked.connect(self.load_endpoints)
-        self.choose_endpoint.rejected.connect(partial(self.set_view, self.welcome))
+        self.choose_endpoint.rejected.connect(
+            partial(self.set_view, self.welcome)
+        )
         self.choose_endpoint.endpoints.itemClicked.connect(self.launch_fuzzer)
 
-        self.fuzzer.rejected.connect(partial(self.set_view, self.choose_endpoint))
+        self.fuzzer.rejected.connect(
+            partial(self.set_view, self.choose_endpoint)
+        )
         self.fuzzer.fuzzFields.clicked.connect(self.fuzz_endpoint)
         self.fuzzer.deleteThis.clicked.connect(self.delete_endpoint)
         self.fuzzer.comboBox.activated.connect(self.launch_fuzzer)
@@ -100,17 +118,25 @@ class PBTKGUI(QApplication):
 
         for tree in (self.fuzzer.pbTree, self.fuzzer.getTree):
             tree.itemEntered.connect(
-                lambda item, _: item.edit() if hasattr(item, "edit") else None
+                lambda item, _: item.edit() if hasattr(item, 'edit') else None
             )
-            tree.itemClicked.connect(lambda item, col: item.update_check(col=col))
+            tree.itemClicked.connect(
+                lambda item, col: item.update_check(col=col)
+            )
             tree.itemExpanded.connect(
-                lambda item: item.expanded() if hasattr(item, "expanded") else None
+                lambda item: (
+                    item.expanded() if hasattr(item, 'expanded') else None
+                )
             )
             tree.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
-        self.welcome.mydirLabel.setText(self.welcome.mydirLabel.text() % BASE_PATH)
+        self.welcome.mydirLabel.setText(
+            self.welcome.mydirLabel.text() % BASE_PATH
+        )
         self.welcome.mydirBtn.clicked.connect(
-            partial(QDesktopServices.openUrl, QUrl.fromLocalFile(str(BASE_PATH)))
+            partial(
+                QDesktopServices.openUrl, QUrl.fromLocalFile(str(BASE_PATH))
+            )
         )
 
         self.set_view(self.welcome)
@@ -124,7 +150,9 @@ class PBTKGUI(QApplication):
         self.choose_extractor.extractors.clear()
 
         for name, meta in extractors.items():
-            item = QListWidgetItem(meta["desc"], self.choose_extractor.extractors)
+            item = QListWidgetItem(
+                meta['desc'], self.choose_extractor.extractors
+            )
             item.setData(Qt.UserRole, name)
 
         self.set_view(self.choose_extractor)
@@ -132,22 +160,24 @@ class PBTKGUI(QApplication):
     def prompt_extractor(self, item):
         extractor = extractors[item.data(Qt.UserRole)]
         inputs = []
-        if not assert_installed(self.view, **extractor.get("depends", {})):
+        if not assert_installed(self.view, **extractor.get('depends', {})):
             return
 
-        if not extractor.get("pick_url", False):
+        if not extractor.get('pick_url', False):
             files, mime = QFileDialog.getOpenFileNames()
             for path in files:
                 inputs.append((path, Path(path).stem))
         else:
-            text, good = QInputDialog.getText(self.view, " ", "Input an URL:")
+            text, good = QInputDialog.getText(self.view, ' ', 'Input an URL:')
             if text:
                 url = urlparse(text)
                 inputs.append((url.geturl(), url.netloc))
 
         if inputs:
-            wait = QProgressDialog("Extracting .proto structures...", None, 0, 0)
-            wait.setWindowTitle(" ")
+            wait = QProgressDialog(
+                'Extracting .proto structures...', None, 0, 0
+            )
+            wait.setWindowTitle(' ')
             self.set_view(wait)
 
             self.worker = Worker(inputs, extractor)
@@ -168,15 +198,17 @@ class PBTKGUI(QApplication):
         nb_written_all, wrote_endpoints = 0, False
 
         for folder, output in outputs.items():
-            nb_written, wrote_endpoints = extractor_save(BASE_PATH, folder, output)
+            nb_written, wrote_endpoints = extractor_save(
+                BASE_PATH, folder, output
+            )
             nb_written_all += nb_written
 
         if wrote_endpoints:
             self.set_view(self.welcome)
             QMessageBox.information(
                 self.view,
-                " ",
-                "%d endpoints and their <i>.proto</i> structures have been extracted! You can now reuse the <i>.proto</i>s or fuzz the endpoints."
+                ' ',
+                '%d endpoints and their <i>.proto</i> structures have been extracted! You can now reuse the <i>.proto</i>s or fuzz the endpoints.'
                 % nb_written_all,
             )
 
@@ -184,8 +216,8 @@ class PBTKGUI(QApplication):
             self.set_view(self.welcome)
             QMessageBox.information(
                 self.view,
-                " ",
-                "%d <i>.proto</i> structures have been extracted! You can now reuse the <i>.protos</i> or define endpoints for them to fuzz."
+                ' ',
+                '%d <i>.proto</i> structures have been extracted! You can now reuse the <i>.protos</i> or define endpoints for them to fuzz.'
                 % nb_written_all,
             )
 
@@ -193,8 +225,8 @@ class PBTKGUI(QApplication):
             self.set_view(self.choose_extractor)
             QMessageBox.warning(
                 self.view,
-                " ",
-                "This extractor did not find Protobuf structures in the corresponding format for specified files.",
+                ' ',
+                'This extractor did not find Protobuf structures in the corresponding format for specified files.',
             )
 
     """
@@ -205,32 +237,36 @@ class PBTKGUI(QApplication):
     # not to slow down startup.
 
     def load_protos(self):
-        self.proto_fs.setRootPath(str(BASE_PATH / "protos"))
+        self.proto_fs.setRootPath(str(BASE_PATH / 'protos'))
         self.set_view(self.choose_proto)
 
     def new_endpoint(self, path):
         if not self.proto_fs.isDir(path):
             path = self.proto_fs.filePath(path)
 
-            if not getattr(self, "only_resp_combo", False):
+            if not getattr(self, 'only_resp_combo', False):
                 self.create_endpoint.pbRequestCombo.clear()
             self.create_endpoint.pbRespCombo.clear()
 
             has_msgs = False
             for name, _ in load_proto_msgs(path):
                 has_msgs = True
-                if not getattr(self, "only_resp_combo", False):
-                    self.create_endpoint.pbRequestCombo.addItem(name, (path, name))
+                if not getattr(self, 'only_resp_combo', False):
+                    self.create_endpoint.pbRequestCombo.addItem(
+                        name, (path, name)
+                    )
                 self.create_endpoint.pbRespCombo.addItem(name, (path, name))
             if not has_msgs:
                 QMessageBox.warning(
-                    self.view, " ", "There is no message defined in this .proto."
+                    self.view,
+                    ' ',
+                    'There is no message defined in this .proto.',
                 )
                 return
 
             self.create_endpoint.reqDataSubform.hide()
 
-            if not getattr(self, "only_resp_combo", False):
+            if not getattr(self, 'only_resp_combo', False):
                 self.create_endpoint.endpointUrl.clear()
                 self.create_endpoint.transports.clear()
                 self.create_endpoint.sampleData.clear()
@@ -239,11 +275,11 @@ class PBTKGUI(QApplication):
 
                 for name, meta in transports.items():
                     item = QListWidgetItem(
-                        meta["desc"], self.create_endpoint.transports
+                        meta['desc'], self.create_endpoint.transports
                     )
-                    item.setData(Qt.UserRole, (name, meta.get("ui_data_form")))
+                    item.setData(Qt.UserRole, (name, meta.get('ui_data_form')))
 
-            elif hasattr(self, "saved_transport_choice"):
+            elif hasattr(self, 'saved_transport_choice'):
                 self.create_endpoint.transports.setCurrentItem(
                     self.saved_transport_choice
                 )
@@ -255,19 +291,21 @@ class PBTKGUI(QApplication):
 
     def pick_transport(self, item):
         name, desc = item.data(Qt.UserRole)
-        self.has_pb_param = desc and "regular" in desc
+        self.has_pb_param = desc and 'regular' in desc
         self.create_endpoint.reqDataSubform.show()
         if self.has_pb_param:
             self.create_endpoint.pbParamSubform.show()
         else:
             self.create_endpoint.pbParamSubform.hide()
         self.create_endpoint.sampleDataLabel.setText(
-            "Sample request data, one per line (in the form of %s):" % desc
+            'Sample request data, one per line (in the form of %s):' % desc
         )
 
     def load_another_pb(self):
         self.only_resp_combo = True
-        self.saved_transport_choice = self.create_endpoint.transports.currentItem()
+        self.saved_transport_choice = (
+            self.create_endpoint.transports.currentItem()
+        )
         self.set_view(self.choose_proto)
 
     def write_endpoint(self):
@@ -291,27 +329,27 @@ class PBTKGUI(QApplication):
             and (not has_resp_pb or resp_pb)
         ):
             QMessageBox.warning(
-                self.view, " ", "Please fill all relevant information fields."
+                self.view, ' ', 'Please fill all relevant information fields.'
             )
 
         else:
             json = {
-                "request": {
-                    "transport": transport.data(Qt.UserRole)[0],
-                    "proto_path": request_pb[0]
-                    .replace(str(BASE_PATH / "protos"), "")
-                    .strip("/\\"),
-                    "proto_msg": request_pb[1],
-                    "url": url,
+                'request': {
+                    'transport': transport.data(Qt.UserRole)[0],
+                    'proto_path': request_pb[0]
+                    .replace(str(BASE_PATH / 'protos'), '')
+                    .strip('/\\'),
+                    'proto_msg': request_pb[1],
+                    'url': url,
                 }
             }
             if self.has_pb_param:
-                json["request"]["pb_param"] = pb_param
+                json['request']['pb_param'] = pb_param
 
-            sample_data = list(filter(None, sample_data.split("\n")))
+            sample_data = list(filter(None, sample_data.split('\n')))
             if sample_data:
                 transport_obj = transports[transport.data(Qt.UserRole)[0]]
-                transport_obj = transport_obj["func"](pb_param, url)
+                transport_obj = transport_obj['func'](pb_param, url)
 
                 for sample_id, sample in enumerate(sample_data):
                     try:
@@ -319,30 +357,32 @@ class PBTKGUI(QApplication):
                     except Exception:
                         return QMessageBox.warning(
                             self.view,
-                            " ",
-                            "Some of your sample data is not in the specified format.",
+                            ' ',
+                            'Some of your sample data is not in the specified format.',
                         )
                     if not sample:
                         return QMessageBox.warning(
                             self.view,
-                            " ",
+                            ' ',
                             "Some of your sample data didn't contain the Protobuf parameter key you specified.",
                         )
                     sample_data[sample_id] = sample
 
-                json["request"]["samples"] = sample_data
+                json['request']['samples'] = sample_data
 
             if has_resp_pb:
-                json["response"] = {
-                    "format": "raw_pb",
-                    "proto_path": resp_pb[0]
-                    .replace(str(BASE_PATH / "protos"), "")
-                    .strip("/\\"),
-                    "proto_msg": resp_pb[1],
+                json['response'] = {
+                    'format': 'raw_pb',
+                    'proto_path': resp_pb[0]
+                    .replace(str(BASE_PATH / 'protos'), '')
+                    .strip('/\\'),
+                    'proto_msg': resp_pb[1],
                 }
-            insert_endpoint(BASE_PATH / "endpoints", json)
+            insert_endpoint(BASE_PATH / 'endpoints', json)
 
-            QMessageBox.information(self.view, " ", "Endpoint created successfully.")
+            QMessageBox.information(
+                self.view, ' ', 'Endpoint created successfully.'
+            )
             self.set_view(self.welcome)
 
     """
@@ -352,32 +392,34 @@ class PBTKGUI(QApplication):
     def load_endpoints(self):
         self.choose_endpoint.endpoints.clear()
 
-        for name in listdir(str(BASE_PATH / "endpoints")):
-            if name.endswith(".json"):
+        for name in listdir(str(BASE_PATH / 'endpoints')):
+            if name.endswith('.json'):
                 item = QListWidgetItem(
-                    name.split(".json")[0], self.choose_endpoint.endpoints
+                    name.split('.json')[0], self.choose_endpoint.endpoints
                 )
                 item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
 
                 pb_msg_to_endpoints = defaultdict(list)
-                with open(str(BASE_PATH / "endpoints" / name)) as fd:
+                with open(str(BASE_PATH / 'endpoints' / name)) as fd:
                     for endpoint in load(fd, object_pairs_hook=OrderedDict):
                         pb_msg_to_endpoints[
-                            endpoint["request"]["proto_msg"].split(".")[-1]
+                            endpoint['request']['proto_msg'].split('.')[-1]
                         ].append(endpoint)
 
                 for pb_msg, endpoints in pb_msg_to_endpoints.items():
                     item = QListWidgetItem(
-                        " " * 4 + pb_msg, self.choose_endpoint.endpoints
+                        ' ' * 4 + pb_msg, self.choose_endpoint.endpoints
                     )
                     item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
 
                     for endpoint in endpoints:
                         path_and_qs = (
-                            "/" + endpoint["request"]["url"].split("/", 3).pop()
+                            '/'
+                            + endpoint['request']['url'].split('/', 3).pop()
                         )
                         item = QListWidgetItem(
-                            " " * 8 + path_and_qs, self.choose_endpoint.endpoints
+                            ' ' * 8 + path_and_qs,
+                            self.choose_endpoint.endpoints,
                         )
                         item.setData(Qt.UserRole, endpoint)
 
@@ -391,31 +433,39 @@ class PBTKGUI(QApplication):
 
         if data:
             self.current_req_proto = (
-                BASE_PATH / "protos" / data["request"]["proto_path"]
+                BASE_PATH / 'protos' / data['request']['proto_path']
             )
 
             self.pb_request = load_proto_msgs(self.current_req_proto)
-            self.pb_request = dict(self.pb_request)[data["request"]["proto_msg"]]()
+            self.pb_request = dict(self.pb_request)[
+                data['request']['proto_msg']
+            ]()
 
             self.pb_resp = None
 
-            if data.get("response") and data["response"]["format"] == "raw_pb":
+            if data.get('response') and data['response']['format'] == 'raw_pb':
                 self.pb_resp = load_proto_msgs(
-                    BASE_PATH / "protos" / data["response"]["proto_path"]
+                    BASE_PATH / 'protos' / data['response']['proto_path']
                 )
-                self.pb_resp = dict(self.pb_resp)[data["response"]["proto_msg"]]
+                self.pb_resp = dict(self.pb_resp)[
+                    data['response']['proto_msg']
+                ]
 
-            self.pb_param = data["request"].get("pb_param")
-            self.base_url = data["request"]["url"]
+            self.pb_param = data['request'].get('pb_param')
+            self.base_url = data['request']['url']
             self.endpoint = data
 
-            self.transport_meta = transports[data["request"]["transport"]]
-            self.transport = self.transport_meta["func"](self.pb_param, self.base_url)
+            self.transport_meta = transports[data['request']['transport']]
+            self.transport = self.transport_meta['func'](
+                self.pb_param, self.base_url
+            )
 
-            sample = ""
-            if data["request"].get("samples"):
-                sample = data["request"]["samples"][sample_id]
-            self.get_params = self.transport.load_sample(sample, self.pb_request)
+            sample = ''
+            if data['request'].get('samples'):
+                sample = data['request']['samples'][sample_id]
+            self.get_params = self.transport.load_sample(
+                sample, self.pb_request
+            )
 
             # Get initial data into the Protobuf tree view
             self.fuzzer.pbTree.clear()
@@ -429,7 +479,9 @@ class PBTKGUI(QApplication):
 
             # Do the same for transport-specific data
             self.fuzzer.getTree.clear()
-            self.fuzzer.tabs.setTabText(1, self.transport_meta.get("ui_tab", ""))
+            self.fuzzer.tabs.setTabText(
+                1, self.transport_meta.get('ui_tab', '')
+            )
             if self.get_params:
                 for key, val in self.get_params.items():
                     ProtocolDataItem(self.fuzzer.getTree, key, val, self)
@@ -437,11 +489,15 @@ class PBTKGUI(QApplication):
             # Fill the request samples combo box if we're loading a new
             # endpoint.
             if not isinstance(item, int):
-                if len(data["request"].get("samples", [])) > 1:
+                if len(data['request'].get('samples', [])) > 1:
                     self.fuzzer.comboBox.clear()
-                    for sample_id, sample in enumerate(data["request"]["samples"]):
+                    for sample_id, sample in enumerate(
+                        data['request']['samples']
+                    ):
                         self.fuzzer.comboBox.addItem(
-                            sample[self.pb_param] if self.pb_param else str(sample),
+                            sample[self.pb_param]
+                            if self.pb_param
+                            else str(sample),
                             (data, sample_id),
                         )
                     self.fuzzer.comboBoxLabel.show()
@@ -452,7 +508,7 @@ class PBTKGUI(QApplication):
 
                 self.set_view(self.fuzzer)
 
-            self.fuzzer.frame.setUrl(QUrl("about:blank"))
+            self.fuzzer.frame.setUrl(QUrl('about:blank'))
             self.update_fuzzer()
 
     """
@@ -488,7 +544,9 @@ class PBTKGUI(QApplication):
             else:
                 if ds.cpp_type == ds.CPPTYPE_MESSAGE:
                     self.ds_items[id(ds)][tuple(path)].setExpanded(True)
-                    self.ds_items[id(ds)][tuple(path)].setDefault(parent=msg, msg=val)
+                    self.ds_items[id(ds)][tuple(path)].setDefault(
+                        parent=msg, msg=val
+                    )
                     self.parse_fields(val, path)
 
                 else:
@@ -503,35 +561,42 @@ class PBTKGUI(QApplication):
             resp.content,
             resp.text,
             resp.url,
-            resp.headers["Content-Type"].split(";")[0],
+            resp.headers['Content-Type'].split(';')[0],
         )
 
-        meta = "%s %d %08x\n%s" % (mime, len(data), crc32(data) & 0xFFFFFFFF, resp.url)
+        meta = '%s %d %08x\n%s' % (
+            mime,
+            len(data),
+            crc32(data) & 0xFFFFFFFF,
+            resp.url,
+        )
         self.fuzzer.urlField.setText(meta)
 
         self.fuzzer.frame.update_frame(
-            data, text, url, mime, getattr(self, "pb_resp", None)
+            data, text, url, mime, getattr(self, 'pb_resp', None)
         )
 
     def fuzz_endpoint(self):
         QMessageBox.information(
-            self.view, " ", "Automatic fuzzing is not implemented yet."
+            self.view, ' ', 'Automatic fuzzing is not implemented yet.'
         )
 
     def delete_endpoint(self):
         if (
-            QMessageBox.question(self.view, " ", "Delete this endpoint?")
+            QMessageBox.question(self.view, ' ', 'Delete this endpoint?')
             == QMessageBox.Yes
         ):
             path = str(
-                BASE_PATH / "endpoints" / (urlparse(self.base_url).netloc + ".json")
+                BASE_PATH
+                / 'endpoints'
+                / (urlparse(self.base_url).netloc + '.json')
             )
 
             with open(path) as fd:
                 json = load(fd, object_pairs_hook=OrderedDict)
             json.remove(self.endpoint)
 
-            with open(path, "w") as fd:
+            with open(path, 'w') as fd:
                 dump(json, fd, ensure_ascii=False, indent=4)
             if not json:
                 remove(path)
@@ -539,16 +604,16 @@ class PBTKGUI(QApplication):
             self.load_endpoints()
 
     def add_tab_data(self):
-        text, good = QInputDialog.getText(self.view, " ", "Field name:")
+        text, good = QInputDialog.getText(self.view, ' ', 'Field name:')
         if text:
-            ProtocolDataItem(self.fuzzer.getTree, text, "", self).edit()
+            ProtocolDataItem(self.fuzzer.getTree, text, '', self).edit()
 
     """
         Utility methods follow
     """
 
     def set_view(self, view):
-        if hasattr(self, "view"):
+        if hasattr(self, 'view'):
             self.view.hide()
         view.show()
         self.view = view
@@ -579,16 +644,18 @@ class Worker(QThread):
         output = defaultdict(list)
         for input_, folder in self.inputs:
             # Extractor is runned here
-            for name, contents in self.extractor["func"](input_):
-                if name == "_progress":
+            for name, contents in self.extractor['func'](input_):
+                if name == '_progress':
                     self.progress.emit(*contents)
                 else:
                     output[folder].append((name, contents))
 
         self.finished.emit(output)
 
+
 def main():
     PBTKGUI()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()

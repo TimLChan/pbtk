@@ -17,28 +17,28 @@ from re import match
 """
 
 types_dec = {
-    "B": fd.TYPE_BYTES,
-    "b": fd.TYPE_BOOL,
-    "d": fd.TYPE_DOUBLE,
-    "e": fd.TYPE_ENUM,
-    "f": fd.TYPE_FLOAT,
-    "g": fd.TYPE_SFIXED32,
-    "h": fd.TYPE_SFIXED64,
-    "i": fd.TYPE_INT32,
-    "j": fd.TYPE_INT64,
-    "m": fd.TYPE_MESSAGE,
-    "n": fd.TYPE_SINT32,
-    "o": fd.TYPE_SINT64,
-    "s": fd.TYPE_STRING,
-    "u": fd.TYPE_UINT32,
-    "v": fd.TYPE_UINT64,
-    "x": fd.TYPE_FIXED32,
-    "y": fd.TYPE_FIXED64,
-    "z": "base64_string",
+    'B': fd.TYPE_BYTES,
+    'b': fd.TYPE_BOOL,
+    'd': fd.TYPE_DOUBLE,
+    'e': fd.TYPE_ENUM,
+    'f': fd.TYPE_FLOAT,
+    'g': fd.TYPE_SFIXED32,
+    'h': fd.TYPE_SFIXED64,
+    'i': fd.TYPE_INT32,
+    'j': fd.TYPE_INT64,
+    'm': fd.TYPE_MESSAGE,
+    'n': fd.TYPE_SINT32,
+    'o': fd.TYPE_SINT64,
+    's': fd.TYPE_STRING,
+    'u': fd.TYPE_UINT32,
+    'v': fd.TYPE_UINT64,
+    'x': fd.TYPE_FIXED32,
+    'y': fd.TYPE_FIXED64,
+    'z': 'base64_string',
 }
 
 
-def proto_url_decode(pburl, pbdesc, sep="!"):
+def proto_url_decode(pburl, pbdesc, sep='!'):
     if pburl:
         consume(pburl.strip(sep).split(sep), pbdesc, sep)
 
@@ -46,11 +46,11 @@ def proto_url_decode(pburl, pbdesc, sep="!"):
 def consume(obj, pb, sep):
     while obj:
         field = obj.pop(0)
-        index, type_, val = match(r"(\d+)(\w)(.*)", field).groups()
+        index, type_, val = match(r'(\d+)(\w)(.*)', field).groups()
         type_ = types_dec[type_]
 
         if int(index) not in pb.DESCRIPTOR.fields_by_number:
-            warn("Unknown index: !" + field)
+            warn('Unknown index: !' + field)
             if type_ == fd.TYPE_MESSAGE:
                 del obj[: int(val)]
             continue
@@ -70,15 +70,15 @@ def consume(obj, pb, sep):
             continue
 
         elif type_ == fd.TYPE_STRING:
-            if sep == "!":
-                val = val.replace("*21", "!").replace("*2A", "*")
+            if sep == '!':
+                val = val.replace('*21', '!').replace('*2A', '*')
             else:
                 val = unquote(val)
 
         elif type_ == fd.TYPE_BYTES:
-            val = urlsafe_b64decode(val + "=" * (-len(val) % 4))
-        elif type_ == "base64_string":
-            val = urlsafe_b64decode(val + "=" * (-len(val) % 4)).decode("utf8")
+            val = urlsafe_b64decode(val + '=' * (-len(val) % 4))
+        elif type_ == 'base64_string':
+            val = urlsafe_b64decode(val + '=' * (-len(val) % 4)).decode('utf8')
 
         elif type_ == fd.TYPE_BOOL:
             val = bool(int(val))
@@ -101,8 +101,8 @@ def consume(obj, pb, sep):
 types_enc = {v: k for k, v in types_dec.items()}
 
 
-def proto_url_encode(pbmsg, sep="!"):
-    return sep.join(produce([""] * (sep == "!"), pbmsg, sep))
+def proto_url_encode(pbmsg, sep='!'):
+    return sep.join(produce([''] * (sep == '!'), pbmsg, sep))
 
 
 def produce(obj, pb, sep):
@@ -111,39 +111,39 @@ def produce(obj, pb, sep):
             if ds.cpp_type == ds.CPPTYPE_MESSAGE:
                 origlen = len(obj)
                 produce(obj, val, sep)
-                obj.insert(origlen, "%dm%d" % (ds.number, len(obj) - origlen))
+                obj.insert(origlen, '%dm%d' % (ds.number, len(obj) - origlen))
                 continue
 
             elif ds.type == ds.TYPE_STRING:
-                if sep == "!":
-                    val = val.replace("*", "*2A").replace("!", "*21")
+                if sep == '!':
+                    val = val.replace('*', '*2A').replace('!', '*21')
                 else:
                     val = quote(val, safe="~()*!.'")
 
             elif ds.type == ds.TYPE_BYTES:
-                val = urlsafe_b64encode(val).decode("ascii").strip("=")
+                val = urlsafe_b64encode(val).decode('ascii').strip('=')
 
             elif ds.type == ds.TYPE_BOOL:
                 val = int(val)
 
-            obj.append("%d%s%s" % (ds.number, types_enc[ds.type], val))
+            obj.append('%d%s%s' % (ds.number, types_enc[ds.type], val))
 
     return obj
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     from argparse import ArgumentParser
     from common import load_proto_msgs
 
     parser = ArgumentParser(
-        description="Decode a JsProtoUrl text message, providing a .proto."
+        description='Decode a JsProtoUrl text message, providing a .proto.'
     )
-    parser.add_argument("pburl_data")
-    parser.add_argument("proto_file")
-    parser.add_argument("proto_msg_name", nargs="?")
+    parser.add_argument('pburl_data')
+    parser.add_argument('proto_file')
+    parser.add_argument('proto_msg_name', nargs='?')
     args = parser.parse_args()
 
-    sep = "!" if args.pburl_data[0] == "!" else "&"
+    sep = '!' if args.pburl_data[0] == '!' else '&'
 
     msg = None
     for name, cls in load_proto_msgs(args.proto_file):
@@ -151,7 +151,7 @@ if __name__ == "__main__":
             msg = cls()
             break
     if not msg:
-        raise ValueError("Provided message name was not found in .proto.")
+        raise ValueError('Provided message name was not found in .proto.')
 
     proto_url_decode(args.pburl_data, msg, sep)
 

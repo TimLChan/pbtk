@@ -1,1 +1,1 @@
-__all__ = ["from_binary", "jar_extract", "web_extract"]
+__all__ = ['from_binary', 'jar_extract', 'web_extract']

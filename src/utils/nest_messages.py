@@ -33,11 +33,15 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
             del msg_to_referrers[msg]
             for field, referrer, _ in referrers:
                 field = next(
-                    (i for i in msg_path_to_obj[referrer].field if i.name == field),
+                    (
+                        i
+                        for i in msg_path_to_obj[referrer].field
+                        if i.name == field
+                    ),
                     None,
                 )
 
-                field.ClearField("type_name")
+                field.ClearField('type_name')
                 field.type = field.TYPE_BYTES
         else:
             for _, referrer, _ in referrers:
@@ -69,9 +73,9 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
                 and not msg_path_to_obj[referrer].options.map_entry
                 # If it's a subclass, parent must be the same
                 and (
-                    "$" not in msg
-                    or msg.split(".")[-1].split("$")[0]
-                    == referrer.split(".")[-1].split("$")[0]
+                    '$' not in msg
+                    or msg.split('.')[-1].split('$')[0]
+                    == referrer.split('.')[-1].split('$')[0]
                 )
             ]
 
@@ -106,7 +110,7 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
         # Check for duplicate enum fields in the same package.
         if not isinstance(msg_obj, DescriptorProto):
             for enum_field in msg_obj.value:
-                name = msg_pkg + "." + enum_field.name
+                name = msg_pkg + '.' + enum_field.name
                 enumfield_to_enums[name].add(msg)
 
                 if len(enumfield_to_enums[name]) > 1:
@@ -123,7 +127,7 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
             duplicate_enumfields = enum_to_dupfields.get(msg, set())
 
             for field, referrer in sorted(
-                in_pkg, key=lambda x: msg_to_newloc.get(x[1], x[1]).count(".")
+                in_pkg, key=lambda x: msg_to_newloc.get(x[1], x[1]).count('.')
             ):
                 top_referrer = msg_to_topmost.get(referrer, referrer)
 
@@ -158,19 +162,19 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
     for msg, msg_obj in msg_path_to_obj.items():
         # If we're a top-level message, enforce name transforms anyway
         if msg not in msg_to_topmost:
-            new_name = msg_obj.name.split("$")[-1]
+            new_name = msg_obj.name.split('$')[-1]
             new_name = new_name[0].upper() + new_name[1:]
 
             msg_pkg = get_pkg(msg)
             if msg_pkg:
-                msg_pkg += "."
+                msg_pkg += '.'
 
             if new_name != msg_obj.name:
                 while (
                     newloc_to_msg.get(msg_pkg + new_name, msg_pkg + new_name)
                     in msg_path_to_obj
                 ):
-                    new_name += "_"
+                    new_name += '_'
                 msg_obj.name = new_name
 
             fix_naming(
@@ -193,17 +197,19 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
 
     for msg, msg_obj in msg_path_to_obj.items():
         if msg not in msg_to_topmost:
-            path = msg.split("$")[0].replace(".", "/") + ".proto"
+            path = msg.split('$')[0].replace('.', '/') + '.proto'
 
             if path not in path_to_file:
                 path_to_file[path] = FileDescriptorProto()
-                path_to_file[path].syntax = "proto2"
+                path_to_file[path].syntax = 'proto2'
                 path_to_file[path].package = get_pkg(msg)
                 path_to_file[path].name = path
             file_obj = path_to_file[path]
 
             for imported in msg_to_imports[msg]:
-                import_path = imported.split("$")[0].replace(".", "/") + ".proto"
+                import_path = (
+                    imported.split('$')[0].replace('.', '/') + '.proto'
+                )
                 if (
                     import_path != path
                     and imported not in msg_to_topmost
@@ -219,14 +225,16 @@ def nest_and_print_to_files(msg_path_to_obj, msg_to_referrers):
 
             path_to_defines[path].append(msg)
             path_to_defines[path] += [
-                k for k, v in msg_to_topmost.items() if v == msg and "$map" not in k
+                k
+                for k, v in msg_to_topmost.items()
+                if v == msg and '$map' not in k
             ]
 
     for path, file_obj in path_to_file.items():
         name, proto = descpb_to_proto(file_obj)
-        header_lines = ["/**", "Messages defined in this file:\n"]
+        header_lines = ['/**', 'Messages defined in this file:\n']
         header_lines += path_to_defines[path]
-        yield name, "\n * ".join(header_lines) + "\n */\n\n" + proto
+        yield name, '\n * '.join(header_lines) + '\n */\n\n' + proto
 
 
 def merge_and_rename(
@@ -242,14 +250,14 @@ def merge_and_rename(
     newloc_to_msg,
 ):
     if msg_pkg:
-        msg_pkg += "."
+        msg_pkg += '.'
 
     msg_obj = msg_path_to_obj[msg]
     referrer_obj = msg_path_to_obj[referrer]
     top_path = msg_to_topmost.get(referrer, referrer)
 
     # Strip out $'s from name
-    new_name = msg_obj.name.split("$")[-1]
+    new_name = msg_obj.name.split('$')[-1]
 
     # Ensure first letter is uppercase, and avoid conflicts
     new_name = new_name[0].upper() + new_name[1:]
@@ -271,7 +279,7 @@ def merge_and_rename(
             and msg_pkg + new_name not in msg_to_topmost
         )
     ):
-        new_name += "_"
+        new_name += '_'
     msg_obj.name = new_name
 
     # Perform the merging of nested message
@@ -285,7 +293,7 @@ def merge_and_rename(
     # Perform the renaming of references to nested message, and
     # of references to children of nested message. Also, fix imports
 
-    new_path = msg_to_newloc.get(referrer, referrer) + "." + nested.name
+    new_path = msg_to_newloc.get(referrer, referrer) + '.' + nested.name
 
     msg_to_imports[top_path].extend(msg_to_imports[msg])
 
@@ -337,10 +345,11 @@ def fix_naming(
     # Fix references.
     for field, referrer, _ in msg_to_referrers.get(orig_path, []):
         field = next(
-            (i for i in msg_path_to_obj[referrer].field if i.name == field), None
+            (i for i in msg_path_to_obj[referrer].field if i.name == field),
+            None,
         )
 
-        field.type_name = "." + new_path
+        field.type_name = '.' + new_path
 
         # Fix imports in reference's files.
         referrer_top_path = msg_to_topmost.get(referrer, referrer)
@@ -352,8 +361,8 @@ def fix_naming(
         for child in [*nested.nested_type, *nested.enum_type]:
             fix_naming(
                 child,
-                new_path + "." + child.name,
-                prev_path + "." + child.name,
+                new_path + '.' + child.name,
+                prev_path + '.' + child.name,
                 top_path,
                 msg_to_referrers,
                 msg_to_topmost,
@@ -364,4 +373,4 @@ def fix_naming(
             )
 
 
-get_pkg = lambda x: ("." + x).rsplit(".", 1)[0][1:]
+get_pkg = lambda x: ('.' + x).rsplit('.', 1)[0][1:]
