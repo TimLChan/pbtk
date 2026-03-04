@@ -59,13 +59,18 @@ The following scripts can also be used standalone, without a GUI:
 
 The GUI can be lanched through the main script:
 
-    ./gui.py
+```bash
+uv sync # Download dependencies to the .venv folder
+source .venv/bin/activate # Put the local scripts in $PATH for the current shell session
+uv tool install -e . # Put the local scripts in $PATH all time
+pbtk
+```
 
 The following scripts can also be used standalone, without a GUI:
 
-    ./src/extractors/jar_extract.py [-h] input_file [output_dir]
-    ./src/extractors/from_binary.py [-h] input_file [output_dir]
-    ./src/extractors/web_extract.py [-h] input_url [output_dir]
+    pbtk-jar-extract [-h] input_file [output_dir]
+    pbtk-from-binary [-h] input_file [output_dir]
+    pbtk-web-extract [-h] input_url [output_dir]
 
 
 ## Typical workflow
