@@ -9,3 +9,4 @@ build/
 vendor/
 repo/
 .flatpak-builder/
+*.snap
