@@ -78,9 +78,9 @@ parts:
       ln -s ../usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/bin/java bin/java
       ln -s ../../usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/bin/java usr/bin/java
 
-      mkdir -p usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security
-      rm -f usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/cacerts
-      ln -s ../../../../../../../etc/ssl/certs/java/cacerts usr/lib/jvm/java-8-openjdk-amd64/jre/lib/security/cacerts
+      mkdir -p usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/jre/lib/security
+      rm -f usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/jre/lib/security/cacerts
+      ln -s ../../../../../../../etc/ssl/certs/java/cacerts usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/jre/lib/security/cacerts
 
 layout:
   /usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR:
