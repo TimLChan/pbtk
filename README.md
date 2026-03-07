@@ -11,7 +11,9 @@ pbtk (*Protobuf toolkit*) is a full-fledged set of scripts, accessible through a
 
 - **Editing, replaying and fuzzing data** sent to Protobuf network endpoints, through a handy graphical interface that allows you to edit live the fields for a Protobuf message and view the result.
 
-<p align="center">![The pbtk editor GUI](https://i.imgur.com/7w6ABqy.png)</p>
+<p align="center">
+<img src="https://i.imgur.com/7w6ABqy.png" alt="The pbtk editor GUI">
+</p>
 
 ## Installation
 
