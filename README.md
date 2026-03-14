@@ -19,13 +19,6 @@ pbtk (*Protobuf toolkit*) is a full-fledged set of scripts, accessible through a
 
 PBTK requires Python ≥ 3.5, PySide 6, Python-Protobuf 3, and a handful of executable programs (chromium, jad, dex2jar...) for running extractor scripts.
 
-Ubuntu users can install it using `snap`:
-
-```
-$ sudo snap install pbtk
-$ pbtk
-```
-
 Archlinux users can install directly through the [package](https://aur.archlinux.org/packages/pbtk-git/):
 
 ```
