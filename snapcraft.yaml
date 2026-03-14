@@ -21,7 +21,7 @@ apps:
       # lib/python3.12/site-packages/PySide6/Qt/plugins/platforms/libqwayland-egl.so
       # usr/lib/x86_64-linux-gnu/qt6/plugins/platforms/libqwayland-egl.so
       # usr/lib/x86_64-linux-gnu/qt6/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so
-      PYTHONPATH: $SNAP/usr/lib/python3:$SNAP/usr/lib/python3.12:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3/site-packages:$SNAP/usr/lib/python3.12/dist-packages:$SNAP/usr/lib/python3.12/site-packages${PYTHONPATH:+:$PYTHONPATH}
+      PYTHONPATH: $SNAP/usr/lib/python3:$SNAP/usr/lib/python3/dist-packages:$SNAP/usr/lib/python3/site-packages${PYTHONPATH:+:$PYTHONPATH}
       # PATH: $SNAP/usr/lib/jvm/java-8-openjdk-$CRAFT_ARCH_BUILD_FOR/bin${PATH:+:$PATH}
       # LD_LIBRARY_PATH: /usr/lib:/snap/kde-pyside6-core24-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       # QT_QPA_PLATFORM: xcb
@@ -51,6 +51,7 @@ parts:
       snapcraftctl pull
 
       sed -ri 's/"pyside.+",//g' pyproject.toml
+      sed -ri 's/"system-pyside.+",//g' pyproject.toml
 
   share:
     plugin: dump
