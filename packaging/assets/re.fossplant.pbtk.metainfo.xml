@@ -62,8 +62,6 @@ https://hughsie.github.io/oars/index.html
         <p>Mark the state of what is functional and what needs an update in the UI</p>
       </description>
     </release>
-  </releases>
-  <releases>
     <release version="1.0.8" date="2026-03-04">
       <description>
         <p>Implement Flatpak compatibility</p>
