@@ -18,6 +18,14 @@
             ]
         },
         {
+            "name": "python3-pyside6",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"pyside6>=6.10.2\" --no-build-isolation"
+            ],
+            "sources": []
+        },
+        {
             "name": "python3-requests",
             "buildsystem": "simple",
             "build-commands": [
@@ -31,8 +39,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/13/69/33ddede1939fdd074bce5434295f38fae7136463422fe4fd3e0e89b98062/charset_normalizer-3.4.4.tar.gz",
-                    "sha256": "94537985111c35f28720e43603b8e7b43a6ecfb2ce1d3058bbe955b73404e21a"
+                    "url": "https://files.pythonhosted.org/packages/7b/60/e3bec1881450851b087e301bedc3daa9377a4d45f1c26aa90b0b235e38aa/charset_normalizer-3.4.6.tar.gz",
+                    "sha256": "1ae6b62897110aa7c79ea2f5dd38d1abca6db663687c0b1ad9aed6f6bae3d9d6"
                 },
                 {
                     "type": "file",
@@ -48,6 +56,20 @@
                     "type": "file",
                     "url": "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl",
                     "sha256": "bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4"
+                }
+            ]
+        },
+        {
+            "name": "python3-system-pyside6",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"system-pyside6>=0.1.1\" --no-build-isolation"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/67/5d/b360f74274378795f725f50f04bcfa7ec0a34ea70266e5fcf30cc8b8170b/system_pyside6-0.1.1-py3-none-any.whl",
+                    "sha256": "d1855bc9721dce97ee233715f34a5b2b45d9581d9d56f40c20e28ddcaf57cd82"
                 }
             ]
         },
