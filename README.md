@@ -5,15 +5,13 @@
 pbtk (*Protobuf toolkit*) is a full-fledged set of scripts, accessible through an unified GUI, that provides two main features:
 
 - **Extracting Protobuf structures from programs**, converting them back into readable *.proto*s, supporting various implementations:
-  - All the main Java runtimes (base, Lite, Nano, Micro, J2ME), with full Proguard support,
-  - Binaries containing embedded reflection metadata (typically C++, sometimes Java and most other bindings),
-  - Web applications using the JsProtoUrl runtime.
+  - All the main Java runtimes (base, Lite, Nano, Micro, J2ME), with full Proguard support, (2026: this still works well but mostly with old APKs)
+  - Binaries containing embedded reflection metadata (typically C++, sometimes Java and most other bindings), (2026: this still works well)
+  - Web applications using the JsProtoUrl runtime. (2026: this needs an update)
 
 - **Editing, replaying and fuzzing data** sent to Protobuf network endpoints, through a handy graphical interface that allows you to edit live the fields for a Protobuf message and view the result.
 
-<p align="center">
 <img src="https://i.imgur.com/7w6ABqy.png" alt="The pbtk editor GUI">
-</p>
 
 ## Installation
 
@@ -62,7 +60,7 @@ The following scripts can also be used standalone, without a GUI:
 
     pbtk-jar-extract [-h] input_file [output_dir]
     pbtk-from-binary [-h] input_file [output_dir]
-    pbtk-web-extract [-h] input_url [output_dir]
+    pbtk-web-extract [-h] input_url [output_dir] # Needs update to work as of 2026
 
 When install from `snap`, the exact commands differ:
 
@@ -84,7 +82,7 @@ The following scripts can also be used standalone, without a GUI:
 
     pbtk-jar-extract [-h] input_file [output_dir]
     pbtk-from-binary [-h] input_file [output_dir]
-    pbtk-web-extract [-h] input_url [output_dir]
+    pbtk-web-extract [-h] input_url [output_dir] # Needs update to work as of 2026
 
 
 ## Typical workflow

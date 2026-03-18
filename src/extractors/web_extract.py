@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 from urllib.parse import quote, quote_plus, unquote_plus, parse_qsl, urlencode
+from logging import getLogger, DEBUG, debug, info, error
 from tempfile import TemporaryDirectory
 from subprocess import Popen, DEVNULL
-from logging import getLogger, DEBUG
 from collections import OrderedDict
 from re import search, sub, findall
 from urllib.request import urlopen
@@ -53,7 +53,10 @@ browser = (
 
 @register_extractor(
     name='pburl_extract',
-    desc='Extract and capture Protobuf-URL endpoints from a Chrome instance (http://*)',
+    desc=(
+        'Extract and capture Protobuf-URL endpoints from a Chrome instance (http://*)'
+        + ' - needs update to work as of 2026'
+    ),
     pick_url=True,
     depends={'binaries': [browser], 'modules': ['websocket']},
 )
@@ -93,12 +96,14 @@ def pburl_extract(url):
         if temp_profile:
             cmd += [
                 '--user-data-dir=' + profile,
+                '--remote-allow-origins=*',
                 '--no-first-run',
                 '--start-maximized',
                 '--no-default-browser-check',
             ]
+        debug('[i] Launching browser: %r' % cmd)
 
-        chrome = Popen(cmd, stdout=DEVNULL, stderr=DEVNULL)
+        chrome = Popen(cmd)  # , stdout=DEVNULL, stderr=DEVNULL
 
         try:
             while True:
@@ -108,6 +113,7 @@ def pburl_extract(url):
                         .read()
                         .decode('utf8')
                     )
+                    info('Received CDP JSON API response: %r' % tabs)
                     tab = next(
                         tab for tab in loads(tabs) if tab['type'] == 'page'
                     )
@@ -122,7 +128,10 @@ def pburl_extract(url):
                 tab['webSocketDebuggerUrl'],
                 on_message=on_message,
                 on_open=on_open,
+                on_close=on_close,
             ).run_forever()
+
+            debug('[i] CDP connection succeeded')
 
         finally:
             # Make sure that Chromium is killed when quitting by error
@@ -162,7 +171,10 @@ def pburl_extract(url):
         proto_to_urls[pbname] = proto_to_urls[proto]
         del proto_to_urls[proto]
 
-        print(pbname, '=>', proto_to_urls[pbname])
+        info(
+            '[i] Extracted Protobuf declaration: %r => %r'
+            % (pbname, proto_to_urls[pbname])
+        )
 
     # Save endpoint to ~/.pbtk
     for sample in endpoints:
@@ -180,6 +192,10 @@ def on_open(ws):
     send(ws, 'Page.navigate', {'url': URL})
 
 
+def on_close(ws, *args):
+    debug('[i] CDP connection closed')
+
+
 def send(ws, call, params=None, data=None):
     global req_id
     req_data[req_id] = (call, data)
@@ -193,6 +209,8 @@ def send(ws, call, params=None, data=None):
 def on_message(ws, msg):
     global seen_scripts
     msg = loads(msg)
+
+    # debug('[i] Received Websocket message: %r' % msg)
 
     if 'method' in msg:
         call, msg = msg['method'], msg['params']
@@ -423,7 +441,7 @@ history.replaceState = wrap(history.replaceState);"""
             if not awaiting_srcs:
                 send(ws, 'Debugger.resume')
             return
-        print('[Error]', call + ':', error)
+        error('[Error] %r: %r' % (call, error))
         exit()
 
     else:
@@ -462,7 +480,7 @@ history.replaceState = wrap(history.replaceState);"""
                             }
                         },
                     )
-                    print('[Script successfully hooked]')
+                    info('[i] Script successfully hooked 🥳 🎉')
 
             awaiting_srcs.remove(sid)
             if not awaiting_srcs:
@@ -531,13 +549,16 @@ def logUrl(url):
                     }
                 )
 
-            print('[Captured]', url, qs, data)
+            info('[i] Captured URL: %r - %r - %r' % (url, qs, data))
             if proto not in proto_to_urls:
                 proto_to_urls[proto] = set()
             proto_to_urls[proto].add(url)
             return
 
-    print('[Not captured]', url, data, '/', 'across', '=>', sent_msgs)
+    info(
+        '[i] Did not capture URL: %r - %r - across => %r'
+        % (url, data, sent_msgs)
+    )
 
 
 def main():
@@ -545,4 +566,6 @@ def main():
 
 
 if __name__ == '__main__':
+    getLogger().setLevel(DEBUG)
+
     main()
