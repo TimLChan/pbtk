@@ -5,9 +5,9 @@
 pbtk (*Protobuf toolkit*) is a full-fledged set of scripts, accessible through an unified GUI, that provides two main features:
 
 - **Extracting Protobuf structures from programs**, converting them back into readable *.proto*s, supporting various implementations:
-  - All the main Java runtimes (base, Lite, Nano, Micro, J2ME), with full Proguard support, (2026: this still works well but mostly with old APKs)
-  - Binaries containing embedded reflection metadata (typically C++, sometimes Java and most other bindings), (2026: this still works well)
-  - Web applications using the JsProtoUrl runtime. (2026: this needs an update)
+  - All the main Java runtimes (base, Lite, Nano, Micro, J2ME), with full Proguard support, *(2026: this still works well but mostly with old APKs)*
+  - Binaries containing embedded reflection metadata (typically C++, sometimes Java and most other bindings), *(2026: this still works well)*
+  - Web applications using the JsProtoUrl runtime. *(2026: this needs an update)*
 
 - **Editing, replaying and fuzzing data** sent to Protobuf network endpoints, through a handy graphical interface that allows you to edit live the fields for a Protobuf message and view the result.
 
