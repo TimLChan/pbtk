@@ -57,6 +57,12 @@ https://hughsie.github.io/oars/index.html
 -->
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="1.1.1" date="2026-03-26">
+      <description>
+        <p>Support spawning Chrome or Chromium from the "web-extract" feature from within Flatpak or Snap (adds the "--talk-name=org.freedesktop.Flatpak" permission in Flatpak)</p>
+        <p>Fix debugging output</p>
+      </description>
+    </release>
     <release version="1.1.0" date="2026-03-18">
       <description>
         <p>Mark the state of what is functional and what needs an update in the UI</p>

@@ -66,6 +66,7 @@ When install from `snap`, the exact commands differ:
 
     pbtk.jar-extract [-h] input_file [output_dir]
     pbtk.from-binary [-h] input_file [output_dir]
+    pbtk.web-extract [-h] input_url [output_dir]
 
 ## Command line usage (local)
 

@@ -3,6 +3,7 @@ from google.protobuf.descriptor_pb2 import FileDescriptorProto
 from google.protobuf.internal.decoder import _DecodeVarint
 
 from os.path import dirname, realpath
+from logging import getLogger, DEBUG
 
 __import__('sys').path.append(dirname(realpath(__file__)) + '/..')
 from utils.common import register_extractor, extractor_main
@@ -82,6 +83,8 @@ def walk_binary(binr):
 
 
 def main():
+    getLogger().setLevel(DEBUG)
+
     extractor_main('from_binary')
 
 

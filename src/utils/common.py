@@ -12,6 +12,7 @@ from argparse import ArgumentParser
 from urllib.parse import urlparse
 from platform import architecture
 from subprocess import run, PIPE
+from logging import debug, info
 from json import dump, load
 from re import findall, sub
 from pathlib import Path
@@ -303,6 +304,16 @@ def extractor_save(base_path, folder, outputs):
                 insert_endpoint(base_path / 'endpoints', {'request': endpoint})
             else:
                 insert_endpoint(base_path, {'request': endpoint})
+
+        elif name == '_info':
+            info('[i] %s' % contents)
+
+        elif name == '_progress':
+            label, progress_or_none = contents
+            if progress_or_none is None:
+                debug('[i] %s' % label)
+            else:
+                debug('[i] %s (%s %%)' % (label, progress_or_none))
 
     return nb_written, wrote_endpoints
 

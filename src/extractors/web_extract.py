@@ -7,8 +7,10 @@ from collections import OrderedDict
 from re import search, sub, findall
 from urllib.request import urlopen
 from json import loads, dumps
+from os import access, X_OK
 from random import randint
 from shutil import which
+from shlex import join
 from time import sleep
 
 from os.path import dirname, realpath
@@ -58,7 +60,7 @@ browser = (
         + ' - needs update to work as of 2026'
     ),
     pick_url=True,
-    depends={'binaries': [browser], 'modules': ['websocket']},
+    depends={'modules': ['websocket']},
 )
 def pburl_extract(url):
     global \
@@ -83,14 +85,6 @@ def pburl_extract(url):
     port = randint(1024, 32767)
     temp_profile = True
 
-    yield (
-        '_progress',
-        (
-            'Opening a browser window...\n(Your activity from the first tab will be captured, until you close it)',
-            None,
-        ),
-    )
-
     with TemporaryDirectory() as profile:
         cmd = [browser, '--remote-debugging-port=%d' % port, 'about:blank']
         if temp_profile:
@@ -101,9 +95,43 @@ def pburl_extract(url):
                 '--start-maximized',
                 '--no-default-browser-check',
             ]
-        debug('[i] Launching browser: %r' % cmd)
 
-        chrome = Popen(cmd)  # , stdout=DEVNULL, stderr=DEVNULL
+        yield (
+            '_progress',
+            (
+                'Trying to launch browser...\n(requires Chrome or Chromium)',
+                None,
+            ),
+        )
+
+        if which(browser) and access(realpath(which(browser)), X_OK):
+            debug('Launching browser: ' + join(cmd))
+
+            chrome = Popen(cmd)  # , stdout=DEVNULL, stderr=DEVNULL
+        elif which('flatpak-spawn'):
+            cmd = [
+                'flatpak-spawn',
+                '--host',
+                '--watch-bus',
+                'bash',
+                '-c',
+                '$(which google-chrome || which chromium-browser || echo google-chrome) %s'
+                % join(cmd[1:]),
+            ]
+            debug('Running browser command on host: ' + join(cmd))
+
+            chrome = Popen(cmd)
+        else:
+            chrome = None
+            yield (
+                '_info',
+                (
+                    "Can't launch Chrome or a Chromium-based "
+                    + 'browser, please launch yourself: "'
+                    + join(cmd)
+                    + '", interact with it, and close it'
+                ),
+            )
 
         try:
             while True:
@@ -121,6 +149,15 @@ def pburl_extract(url):
                 except OSError:
                     sleep(0.1)
 
+            yield (
+                '_progress',
+                (
+                    'Connecting to browser debugging controller...\n(Your activity '
+                    + 'from the first tab will be captured, until you close it)',
+                    None,
+                ),
+            )
+
             from websocket import WebSocketApp
 
             getLogger('websocket').setLevel(DEBUG)
@@ -135,7 +172,8 @@ def pburl_extract(url):
 
         finally:
             # Make sure that Chromium is killed when quitting by error
-            chrome.terminate()
+            if chrome:
+                chrome.terminate()
 
             # Avoid race condition with it writing to profile directory
             sleep(0.2)
@@ -562,10 +600,10 @@ def logUrl(url):
 
 
 def main():
+    getLogger().setLevel(DEBUG)
+
     extractor_main('pburl_extract')
 
 
 if __name__ == '__main__':
-    getLogger().setLevel(DEBUG)
-
     main()

@@ -7,6 +7,7 @@ from google.protobuf.descriptor_pb2 import (
 from re import findall, MULTILINE, search, split, sub, escape, finditer
 from typing import Dict, List, Set, Sequence, Optional
 from collections import OrderedDict, defaultdict
+from logging import getLogger, DEBUG
 from itertools import count, product
 from string import ascii_lowercase
 from ctypes import c_int, c_long
@@ -1377,6 +1378,8 @@ label_consts = {
 
 
 def main():
+    getLogger().setLevel(DEBUG)
+
     extractor_main('jar_extract')
 
 

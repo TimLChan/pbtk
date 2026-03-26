@@ -13,6 +13,7 @@ from PySide6.QtGui import QDesktopServices, QTextOption
 from PySide6.QtCore import Qt, QUrl, Signal, QThread
 from PySide6.QtUiTools import QUiLoader
 
+from logging import getLogger, debug, info, DEBUG
 from signal import signal, SIGINT, SIG_DFL
 from os.path import dirname, realpath
 from collections import defaultdict
@@ -51,6 +52,8 @@ class PBTKGUI(QApplication):
     def __init__(self):
         super().__init__(argv)
         signal(SIGINT, SIG_DFL)
+
+        getLogger().setLevel(DEBUG)
 
         views = dirname(realpath(__file__)) + '/views/'
 
@@ -182,16 +185,24 @@ class PBTKGUI(QApplication):
 
             self.worker = Worker(inputs, extractor)
             self.worker.progress.connect(self.extraction_progress)
+            self.worker.information.connect(self.extraction_info)
             self.worker.finished.connect(self.extraction_done)
             self.worker.start()
+
+    def extraction_info(self, contents):
+        info('[i] %s' % contents)
+
+        QMessageBox.information(self.view, ' ', contents)
 
     def extraction_progress(self, info, progress):
         self.view.setLabelText(info)
 
         if progress is not None:
+            debug('[i] %s (%s %%)' % (info, progress))
             self.view.setRange(0, 100)
             self.view.setValue(int(progress * 100))
         else:
+            debug('[i] ' + info)
             self.view.setRange(0, 0)
 
     def extraction_done(self, outputs):
@@ -633,6 +644,7 @@ class PBTKGUI(QApplication):
 
 class Worker(QThread):
     finished = Signal(object)
+    information = Signal(object)
     progress = Signal(object, object)
 
     def __init__(self, inputs, extractor):
@@ -647,6 +659,8 @@ class Worker(QThread):
             for name, contents in self.extractor['func'](input_):
                 if name == '_progress':
                     self.progress.emit(*contents)
+                elif name == '_info':
+                    self.information.emit(contents)
                 else:
                     output[folder].append((name, contents))
 
