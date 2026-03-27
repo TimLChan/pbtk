@@ -59,7 +59,7 @@ https://hughsie.github.io/oars/index.html
   <releases>
     <release version="1.1.1" date="2026-03-27">
       <description>
-        <p>Support spawning Chrome or Chromium from the "web-extract" feature from within Snap</p>
+        <p>Support spawning Chrome or Chromium for the "web-extract" feature from within Snap</p>
         <p>Fix debugging output</p>
       </description>
     </release>
