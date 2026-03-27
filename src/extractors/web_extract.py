@@ -108,21 +108,9 @@ def pburl_extract(url):
             debug('Launching browser: ' + join(cmd))
 
             chrome = Popen(cmd)  # , stdout=DEVNULL, stderr=DEVNULL
-        elif which('flatpak-spawn'):
-            cmd = [
-                'flatpak-spawn',
-                '--host',
-                '--watch-bus',
-                'bash',
-                '-c',
-                '$(which google-chrome || which chromium-browser || echo google-chrome) %s'
-                % join(cmd[1:]),
-            ]
-            debug('Running browser command on host: ' + join(cmd))
-
-            chrome = Popen(cmd)
         else:
             chrome = None
+            cmd[0] = '$(which google-chrome || which chromium-browser)'
             yield (
                 '_info',
                 (
